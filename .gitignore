@@ -9,7 +9,7 @@
 # Spring Boot property secrets
 /backend/src/main/resources/application-secret.properties
 /backend/application-secret.properties
-./backend/src/main/resources/application-secret.properties
+/backend/src/main/resources/application-secret.properties
 
 # Environment files
 .env
