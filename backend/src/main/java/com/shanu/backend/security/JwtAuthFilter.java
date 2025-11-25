@@ -35,10 +35,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String requestPath = request.getServletPath();
         
-        // Skip filter for public endpoints
+        // Skip filter for public endpoints (auth endpoints, OPTIONS)
+        // Also skip for public forum GETs so listing is readable without a token
         if (requestPath.equals("/api/auth/register") || 
             requestPath.equals("/api/auth/login") || 
-            request.getMethod().equals("OPTIONS")) {
+            request.getMethod().equals("OPTIONS") ||
+            (request.getMethod().equals("GET") && requestPath.startsWith("/api/forum")) ) {
             filterChain.doFilter(request, response);
             return;
         }

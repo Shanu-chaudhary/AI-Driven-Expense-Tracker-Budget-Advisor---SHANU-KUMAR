@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+
+
 
 @Component
 public class JwtUtil {
@@ -20,9 +20,6 @@ public class JwtUtil {
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
-
-    // In-memory blacklist (thread-safe). For production consider Redis.
-    private static final Set<String> BLACKLIST = ConcurrentHashMap.newKeySet();
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
@@ -42,7 +39,7 @@ public class JwtUtil {
     }
 
     public boolean isTokenValid(String token, String email) {
-        return extractEmail(token).equals(email) && !isTokenExpired(token) && !isTokenBlacklisted(token);
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
     }
 
     private Claims extractAllClaims(String token) {
@@ -53,23 +50,12 @@ public class JwtUtil {
                 .getBody();
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
-    }
+        private boolean isTokenExpired(String token) {
+            return extractAllClaims(token).getExpiration().before(new Date());
+        }
 
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token) && !isTokenBlacklisted(token));
-    }
-
-    // ---- Add these methods for blacklist handling ----
-
-    public void invalidateToken(String token) {
-        if (token == null) return;
-        BLACKLIST.add(token);
-    }
-
-    public boolean isTokenBlacklisted(String token) {
-        return token == null ? true : BLACKLIST.contains(token);
-    }
+        public boolean validateToken(String token, UserDetails userDetails) {
+            final String email = extractEmail(token);
+            return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        }
 }

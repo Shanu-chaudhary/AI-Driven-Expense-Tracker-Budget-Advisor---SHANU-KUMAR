@@ -32,6 +32,8 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                // allow public read access to forum posts so the community feed can be viewed without auth
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/forum/posts").permitAll()
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/verify-email").permitAll()
                 .anyRequest().authenticated()
             )

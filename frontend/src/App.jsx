@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ToastProvider } from './context/ToastContext';
 import LoginForm from "./components/Auth/LoginForm";
 import RegisterForm from "./components/Auth/RegisterForm";
 import Dashboard from "./components/Dashboard/Dashboard";
@@ -12,11 +13,14 @@ import ProfilePage from "./pages/ProfilePage";
 import VerifyEmail from "./pages/VerifyEmail";
 import TransactionsPage from "./pages/TransactionsPage";
 import BudgetPage from "./pages/BudgetPage";
+import ExportPage from "./pages/ExportPage";
+import CommunityPage from "./pages/CommunityPage";
 
 function App() {
   const { user } = useContext(AuthContext);
 
   return (
+    <ToastProvider>
     <Router>
       <Routes>
         {/* Public routes */}
@@ -76,8 +80,11 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/budget" element={<BudgetPage />} />
+        <Route path="/export" element={<ExportPage />} />
+        <Route path="/community" element={<CommunityPage />} />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

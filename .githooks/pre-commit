@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Pre-commit hook to scan staged files for obvious secrets.
+# To enable: git config core.hooksPath .githooks
+
+set -e
+
+echo "Running secret-scan pre-commit hook..."
+
+BAD=0
+
+files=$(git diff --cached --name-only --diff-filter=ACM)
+for f in $files; do
+  # skip binary files
+  if git ls-files --stage -- "$f" | grep -q '100644'; then
+    content=$(git show :"$f" 2>/dev/null || true)
+
+    if echo "$content" | grep -E "jwt.secret|spring.mail.password|MAIL_PASSWORD|BEGIN RSA PRIVATE KEY|BEGIN PRIVATE KEY|AWS_SECRET_ACCESS_KEY|aws_secret_access_key" >/dev/null; then
+      echo "Potential secret found in staged file: $f"
+      echo " - Match lines:"
+      echo "$content" | grep -nE "jwt.secret|spring.mail.password|MAIL_PASSWORD|BEGIN RSA PRIVATE KEY|BEGIN PRIVATE KEY|AWS_SECRET_ACCESS_KEY|aws_secret_access_key" | sed -n '1,10p'
+      BAD=1
+    fi
+
+    # hex token heuristic (32+ hex chars)
+    if echo "$content" | grep -E -n "[0-9a-fA-F]{32,}" | sed -n '1,5p' >/dev/null; then
+      echo "Possible long hex token found in $f"
+      BAD=1
+    fi
+
+    # base64-like long string heuristic (>= 32 chars)
+    if echo "$content" | grep -E -n "[A-Za-z0-9+/=]{32,}" | sed -n '1,5p' >/dev/null; then
+      echo "Possible long base64 string found in $f"
+      BAD=1
+    fi
+  fi
+done
+
+if [ "$BAD" -ne 0 ]; then
+  echo "\nERROR: Potential secrets detected in staged files. Remove them or move secrets to env vars/application-secret.properties before committing."
+  echo "To bypass temporarily: git commit --no-verify (not recommended)"
+  exit 1
+fi
+
+exit 0
