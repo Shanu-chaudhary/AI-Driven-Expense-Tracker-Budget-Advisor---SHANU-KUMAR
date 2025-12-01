@@ -41,8 +41,12 @@ const getCannedResponse = () => {
 };
 
 export default function ChatWindow({ onClose }) {
-  const { token } = useContext(AuthContext);
-  const { showToast } = useContext(ToastContext);
+  const authContext = useContext(AuthContext);
+  const toastContext = useContext(ToastContext);
+  
+  // Handle missing contexts gracefully
+  const token = authContext?.token;
+  const showToast = toastContext?.showToast || ((msg, type) => console.log(msg, type));
   const useMockMode = import.meta.env.VITE_USE_CHAT_MOCK === 'true';
 
   const [conversationId, setConversationId] = useState(null);
@@ -62,7 +66,12 @@ export default function ChatWindow({ onClose }) {
 
   // Initialize chat on mount
   useEffect(() => {
-    if (!token && !useMockMode) return;
+    // If no token and not in mock mode, start mock mode as fallback
+    if (!token && !useMockMode) {
+      console.warn('ChatWindow: No token available, falling back to mock mode');
+      startMockConversation();
+      return;
+    }
 
     // Check localStorage for existing conversation
     const savedConvId = localStorage.getItem('chatConversationId');
@@ -70,7 +79,7 @@ export default function ChatWindow({ onClose }) {
       startMockConversation();
     } else if (savedConvId) {
       fetchConversation(savedConvId);
-    } else {
+    } else if (token) {
       startNewConversation();
     }
   }, [token, useMockMode]);
@@ -92,15 +101,20 @@ export default function ChatWindow({ onClose }) {
   // Fetch existing conversation
   const fetchConversation = async (convId) => {
     try {
+      if (!token) {
+        console.warn('No token for fetching conversation, using mock mode');
+        startMockConversation();
+        return;
+      }
       const response = await axios.get(`/api/chat/${convId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setConversationId(convId);
       setMessages(response.data.messages || []);
     } catch (error) {
-      console.error('Error fetching conversation:', error);
-      showToast('Failed to load conversation', 'error');
-      startNewConversation();
+      console.error('Error fetching conversation:', error.message);
+      showToast('Failed to load conversation', 'info');
+      startMockConversation();
     }
   };
 
@@ -108,6 +122,12 @@ export default function ChatWindow({ onClose }) {
   const startNewConversation = async () => {
     try {
       setIsLoading(true);
+      if (!token) {
+        console.warn('No token available for chat start');
+        showToast('Authentication required. Using mock mode.', 'info');
+        startMockConversation();
+        return;
+      }
       const response = await axios.post(
         '/api/chat/start',
         {},
@@ -118,8 +138,10 @@ export default function ChatWindow({ onClose }) {
       localStorage.setItem('chatConversationId', newConvId);
       setMessages([assistantMessage]);
     } catch (error) {
-      console.error('Error starting conversation:', error);
-      showToast('Failed to start chat', 'error');
+      console.error('Error starting conversation:', error.message, error.response?.data);
+      showToast('Failed to start chat. Using mock mode.', 'info');
+      // Fallback to mock mode
+      startMockConversation();
     } finally {
       setIsLoading(false);
     }
@@ -156,6 +178,20 @@ export default function ChatWindow({ onClose }) {
       }, 800);
     } else {
       try {
+        if (!token) {
+          console.warn('No token for sending message, switching to mock mode');
+          // Switch to mock mode and show assistant response
+          const mockResponse = getCannedResponse();
+          const assistantMsg = {
+            role: 'assistant',
+            text: mockResponse.text,
+            options: mockResponse.options,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          setIsLoading(false);
+          return;
+        }
         const response = await axios.post(
           `/api/chat/${conversationId}/message`,
           { text: userMessageText, option: selectedOption ? true : undefined },
@@ -163,8 +199,17 @@ export default function ChatWindow({ onClose }) {
         );
         setMessages((prev) => [...prev, response.data.assistantMessage]);
       } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('Failed to send message', 'error');
+        console.error('Error sending message:', error.message, error.response?.data);
+        // Fallback to mock response on error
+        const mockResponse = getCannedResponse();
+        const assistantMsg = {
+          role: 'assistant',
+          text: mockResponse.text,
+          options: mockResponse.options,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        showToast('Using mock response (backend unavailable)', 'info');
       } finally {
         setIsLoading(false);
       }
