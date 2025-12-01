@@ -2,8 +2,13 @@ package com.shanu.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.shanu.backend.config.GeminiProperties;
+import com.shanu.backend.config.ChatProperties;
+import com.shanu.backend.config.JwtProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties({GeminiProperties.class, ChatProperties.class, JwtProperties.class})
 public class BackendApplication {
 
 	public static void main(String[] args) {

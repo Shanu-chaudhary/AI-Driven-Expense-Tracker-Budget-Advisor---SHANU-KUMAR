@@ -1,7 +1,6 @@
 package com.shanu.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * GeminiProperties - Configuration properties for Gemini API integration.
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
  * - gemini.api.url
  * - gemini.model
  */
-@Configuration
 @ConfigurationProperties(prefix = "gemini.api")
 public class GeminiProperties {
   private String key;

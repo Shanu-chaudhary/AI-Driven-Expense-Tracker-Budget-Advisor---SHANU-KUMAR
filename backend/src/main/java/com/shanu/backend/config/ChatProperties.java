@@ -1,16 +1,14 @@
 package com.shanu.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * ChatProperties - Configuration properties for Chat functionality.
  * 
  * Maps properties from application.properties:
- * - chat.system.prompt
- * - chat.rate.limit.per-sec (note: hyphen converted to camelCase)
+ * - chat.system-prompt
+ * - chat.rate-limit.per-sec (note: hyphen converted to camelCase)
  */
-@Configuration
 @ConfigurationProperties(prefix = "chat")
 public class ChatProperties {
   private String systemPrompt;

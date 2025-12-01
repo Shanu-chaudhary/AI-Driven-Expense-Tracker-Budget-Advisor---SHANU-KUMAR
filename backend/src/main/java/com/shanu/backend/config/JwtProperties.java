@@ -1,7 +1,6 @@
 package com.shanu.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * JwtProperties - Configuration properties for JWT authentication.
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
  * - jwt.secret
  * - jwt.expiration
  */
-@Configuration
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
   private String secret;
