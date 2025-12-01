@@ -1,6 +1,5 @@
 package com.shanu.backend.controller;
 
-import com.shanu.backend.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -16,9 +15,7 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:5173")
 public class BackupController {
 
-    private final AuthService authService;
-
-    public BackupController(AuthService authService) { this.authService = authService; }
+    // No auth service required for basic local backup endpoint (keeps implementation simple)
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadBackup(@RequestHeader(value = "Authorization", required = false) String token,

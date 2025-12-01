@@ -48,6 +48,20 @@ const Sidebar = () => {
           </li>
 
           <li
+            onClick={() => navigate("/ai-advisor")}
+            className="cursor-pointer px-5 py-3 hover:bg-orange_peel-400 rounded-lg transition flex items-center gap-3"
+          >
+            🤖 AI Advisor
+          </li>
+
+          <li
+            onClick={() => navigate("/ai-history")}
+            className="cursor-pointer px-5 py-3 hover:bg-orange_peel-400 rounded-lg transition flex items-center gap-3"
+          >
+            🕘 AI History
+          </li>
+
+          <li
             onClick={() => navigate("/community")}
             className="cursor-pointer px-5 py-3 hover:bg-orange_peel-400 rounded-lg transition flex items-center gap-3"
           >

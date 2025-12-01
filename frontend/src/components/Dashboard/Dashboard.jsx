@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 import DashboardLayout from "../Layout/DashboardLayout";
 import ProfileCard from "./ProfileCard";
 import FinancialTrends from "./FinancialTrends";
+import TipCard from "../Tips/TipCard";
+import AiHistoryCard from "../AI/AiHistoryCard";
 import { AuthContext } from "../../context/AuthContext";
 import TransactionForm from "../Transactions/TransactionForm";
 import TransactionList from "../Transactions/TransactionList";
@@ -20,6 +22,10 @@ const Dashboard = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   });
+  const [tips, setTips] = useState([]);
+  const [latestAiAdvice, setLatestAiAdvice] = useState(null);
+  const [tipsLoading, setTipsLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   // const [refreshKey, setRefreshKey] = useState(0);
   const listRef = useRef();
   const navigate = useNavigate();
@@ -39,6 +45,44 @@ const Dashboard = () => {
     };
 
     fetchProfile();
+  }, []);
+
+  // Fetch rule-based tips
+  useEffect(() => {
+    const fetchTips = async () => {
+      setTipsLoading(true);
+      try {
+        const res = await axios.get("/tips/recommend");
+        if (res.data && Array.isArray(res.data)) {
+          setTips(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch tips", err);
+      } finally {
+        setTipsLoading(false);
+      }
+    };
+
+    fetchTips();
+  }, []);
+
+  // Fetch latest AI advice
+  useEffect(() => {
+    const fetchLatestAdvice = async () => {
+      setAiLoading(true);
+      try {
+        const res = await axios.get("/ai/history");
+        if (res.data?.history && res.data.history.length > 0) {
+          setLatestAiAdvice(res.data.history[0]); // Most recent first
+        }
+      } catch (err) {
+        console.error("Failed to fetch AI advice", err);
+      } finally {
+        setAiLoading(false);
+      }
+    };
+
+    fetchLatestAdvice();
   }, []);
 
   // fetch summary whenever selected month changes
@@ -131,6 +175,40 @@ const Dashboard = () => {
         <div className="mt-4 px-2">
           <FinancialTrends month={summaryMonth} />
         </div>
+
+        {/* AI Insights Preview Section */}
+        {latestAiAdvice && (
+          <div className="mt-8 px-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">🤖 Latest AI Insights</h3>
+              <button
+                onClick={() => navigate("/ai-advisor")}
+                className="text-orange_peel-500 hover:text-orange_peel-600 font-semibold underline text-sm"
+              >
+                View All →
+              </button>
+            </div>
+            <div className="max-w-lg">
+              <AiHistoryCard entry={latestAiAdvice} />
+            </div>
+          </div>
+        )}
+
+        {/* Rule-Based Tips Section */}
+        {tips.length > 0 && (
+          <div className="mt-8 px-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">💡 Financial Tips</h3>
+              <button
+                onClick={() => navigate("/ai-advisor")}
+                className="text-orange_peel-500 hover:text-orange_peel-600 font-semibold underline text-sm"
+              >
+                View More →
+              </button>
+            </div>
+            <TipCard tips={tips.slice(0, 3)} />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -15,10 +15,12 @@ import javax.crypto.SecretKey;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
+    // Provide safe defaults for local development so the application can start
+    // IMPORTANT: Override these in production via environment variables
+    @Value("${jwt.secret:default_dev_jwt_secret_change_me_please_0123456789abcdef}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration:3600000}")
     private Long jwtExpiration;
 
     private SecretKey getSigningKey() {

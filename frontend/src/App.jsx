@@ -15,6 +15,8 @@ import TransactionsPage from "./pages/TransactionsPage";
 import BudgetPage from "./pages/BudgetPage";
 import ExportPage from "./pages/ExportPage";
 import CommunityPage from "./pages/CommunityPage";
+import AiAdvisor from "./pages/AiAdvisor";
+import AiHistory from "./pages/AiHistory";
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -82,6 +84,22 @@ function App() {
         <Route path="/budget" element={<BudgetPage />} />
         <Route path="/export" element={<ExportPage />} />
         <Route path="/community" element={<CommunityPage />} />
+        <Route
+          path="/ai-advisor"
+          element={
+            <ProfileRequiredRoute>
+              <AiAdvisor />
+            </ProfileRequiredRoute>
+          }
+        />
+        <Route
+          path="/ai-history"
+          element={
+            <ProfileRequiredRoute>
+              <AiHistory />
+            </ProfileRequiredRoute>
+          }
+        />
       </Routes>
     </Router>
     </ToastProvider>

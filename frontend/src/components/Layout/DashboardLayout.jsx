@@ -24,6 +24,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import ChatWidget from "../Chat/ChatWidget";
 
 const DashboardLayout = ({ children }) => {
   return (
@@ -33,6 +34,8 @@ const DashboardLayout = ({ children }) => {
         <Topbar />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+      {/* Chat Widget - floating button and modal */}
+      <ChatWidget />
     </div>
   );
 };
