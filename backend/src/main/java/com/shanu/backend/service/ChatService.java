@@ -38,10 +38,10 @@ public class ChatService {
     @Autowired
     private GeminiClient geminiClient;
     
-    @Value("${chat.system.prompt:You are BudgetPilot, a friendly financial advisor chatbot. Guide the user through a step-by-step journey to understand their financial goals. Ask 2-4 options at a time. Always respond with valid JSON containing: {\"text\": \"Your message\", \"options\": [\"Option 1\", \"Option 2\"], \"confidence\": 75}}")
+    @Value("${chat.system-prompt:You are BudgetPilot, a friendly financial advisor chatbot. Guide the user through a step-by-step journey to understand their financial goals. Ask 2-4 options at a time. Always respond with valid JSON containing: {\"text\": \"Your message\", \"options\": [\"Option 1\", \"Option 2\"], \"confidence\": 75}}")
     private String systemPrompt;
     
-    @Value("${chat.rate.limit.per.sec:2}")
+    @Value("${chat.rate-limit.per-sec:2}")
     private int rateLimitPerSec;
     
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -68,7 +68,9 @@ public class ChatService {
             (String) assistantData.getOrDefault("text", "Hello! How can I help you today?"));
         
         if (assistantData.containsKey("options")) {
-            assistantMessage.setOptions((List<String>) assistantData.get("options"));
+            @SuppressWarnings("unchecked")
+            List<String> options = (List<String>) assistantData.get("options");
+            assistantMessage.setOptions(options);
         }
         if (assistantData.containsKey("confidence")) {
             Map<String, Object> meta = new HashMap<>();
@@ -138,7 +140,9 @@ public class ChatService {
             (String) assistantData.getOrDefault("text", "I understand. How can I assist further?"));
         
         if (assistantData.containsKey("options")) {
-            assistantMessage.setOptions((List<String>) assistantData.get("options"));
+            @SuppressWarnings("unchecked")
+            List<String> options = (List<String>) assistantData.get("options");
+            assistantMessage.setOptions(options);
         }
         
         Map<String, Object> metadata = new HashMap<>();

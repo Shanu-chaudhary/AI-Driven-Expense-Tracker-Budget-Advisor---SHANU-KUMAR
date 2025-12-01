@@ -4,13 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shanu.backend.client.GeminiClient;
 import com.shanu.backend.model.Conversation;
 import com.shanu.backend.model.Message;
 import com.shanu.backend.repository.ConversationRepository;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Tests cover:
  * - startConversation: creates new conversation, calls Gemini, saves to MongoDB
  * - handleUserMessage: appends user message, calls Gemini, parses JSON response
- * - parseGeminiResponse: extracts JSON from code-fenced blocks, fallback to plain text
+ * - parseGeminiResponse: extracts JSON from code-fenced blocks, fallback to plain text (tested indirectly)
  * - checkRateLimit: enforces per-user throttle (2 req/sec max)
  * 
  * Mocks: GeminiClient (API calls), ConversationRepository (database operations)
@@ -35,11 +33,10 @@ class ChatServiceTest {
   @Mock private ConversationRepository conversationRepository;
   @Mock private GeminiClient geminiClient;
   @InjectMocks private ChatService chatService;
-  private ObjectMapper objectMapper;
 
   @BeforeEach
   void setUp() {
-    objectMapper = new ObjectMapper();
+    // Setup complete via @InjectMocks
   }
 
   /**
@@ -47,11 +44,11 @@ class ChatServiceTest {
    * Verifies: conversationId is set, message is saved, repository.save() called.
    */
   @Test
-  void testStartConversation() {
+  void testStartConversation() throws Exception {
     // Arrange
     String userId = "user-123";
     String geminiGreeting =
-        "{\"response\": \"Hello! I'm BudgetPilot.\", \"options\": [\"Start Budget Review\", \"Check Expenses\"]}";
+        "{\"text\": \"Hello! I'm BudgetPilot.\", \"options\": [\"Start Budget Review\", \"Check Expenses\"]}";
 
     when(geminiClient.callGemini(anyString())).thenReturn(geminiGreeting);
     when(conversationRepository.save(any(Conversation.class)))
@@ -79,7 +76,7 @@ class ChatServiceTest {
    * Verifies: user message appended, Gemini called, response parsed, conversation saved.
    */
   @Test
-  void testHandleUserMessage() {
+  void testHandleUserMessage() throws Exception {
     // Arrange
     String conversationId = "conv-123";
     String userId = "user-123";
@@ -88,10 +85,11 @@ class ChatServiceTest {
     Conversation conversation = new Conversation();
     conversation.setId(conversationId);
     conversation.setUserId(userId);
-    conversation.setMessages(List.of());
+    conversation.setMessages(new ArrayList<>());
+    conversation.setMeta(new HashMap<>());
 
     String geminiResponse =
-        "{\"response\": \"Great goal! How much do you want to save?\", \"options\": [\"$100/month\", \"$500/month\"]}";
+        "{\"text\": \"Great goal! How much do you want to save?\", \"options\": [\"$100/month\", \"$500/month\"]}";
 
     when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
     when(geminiClient.callGemini(anyString())).thenReturn(geminiResponse);
@@ -99,69 +97,99 @@ class ChatServiceTest {
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     // Act
-    Message result = chatService.handleUserMessage(conversationId, userId, userText, false);
+    Map<String, Object> result = chatService.handleUserMessage(conversationId, userId, userText, null);
 
     // Assert
     assertNotNull(result);
-    assertEquals("assistant", result.getRole());
-    assertTrue(result.getText().contains("Great goal!"));
+    assertTrue(result.containsKey("assistantMessage"));
+    Message assistantMessage = (Message) result.get("assistantMessage");
+    assertEquals("assistant", assistantMessage.getRole());
+    assertTrue(assistantMessage.getText().contains("Great goal!"));
     verify(conversationRepository, times(1)).findById(conversationId);
     verify(geminiClient, times(1)).callGemini(anyString());
     verify(conversationRepository, times(1)).save(any(Conversation.class));
   }
 
   /**
-   * Test: parseGeminiResponse extracts JSON from code-fenced blocks.
-   * Verifies: ```json...``` block is parsed correctly.
+   * Test: parseGeminiResponse extracts JSON from code-fenced blocks via reflection.
+   * (Method is private, so we test indirectly through public methods)
    */
   @Test
-  void testParseGeminiResponseCodeFenced() {
-    // Arrange
-    String geminiResponse =
-        "Here's the analysis:\n```json\n{\"response\": \"Your spending is high\", \"options\": []}\n```";
+  void testParseGeminiResponseCodeFenced() throws Exception {
+    // Note: parseGeminiResponse is private, tested indirectly via startConversation
+    // This test validates the JSON response format works correctly
+    
+    String userId = "user-123";
+    String geminiResponse = "Here's the analysis:\n```json\n{\"text\": \"Your spending is high\", \"options\": [\"View details\"]}\n```";
+
+    when(geminiClient.callGemini(anyString())).thenReturn(geminiResponse);
+    when(conversationRepository.save(any(Conversation.class)))
+        .thenAnswer(invocation -> {
+          Conversation conv = invocation.getArgument(0);
+          conv.setId("conv-123");
+          return conv;
+        });
 
     // Act
-    Message result = chatService.parseGeminiResponse(geminiResponse);
+    Conversation result = chatService.startConversation(userId);
 
     // Assert
     assertNotNull(result);
-    assertEquals("assistant", result.getRole());
-    assertTrue(result.getText().contains("spending"));
+    Message assistantMsg = result.getMessages().get(0);
+    assertTrue(assistantMsg.getText().contains("spending"));
   }
 
   /**
    * Test: parseGeminiResponse falls back to plain text if JSON parsing fails.
-   * Verifies: unparseable response still returns assistant message.
+   * Verifies: unparseable response still processes correctly.
    */
   @Test
-  void testParseGeminiResponseFallback() {
+  void testParseGeminiResponseFallback() throws Exception {
     // Arrange
+    String userId = "user-123";
     String plainTextResponse = "I couldn't parse that. Can you try again?";
 
+    when(geminiClient.callGemini(anyString())).thenReturn(plainTextResponse);
+    when(conversationRepository.save(any(Conversation.class)))
+        .thenAnswer(invocation -> {
+          Conversation conv = invocation.getArgument(0);
+          conv.setId("conv-123");
+          return conv;
+        });
+
     // Act
-    Message result = chatService.parseGeminiResponse(plainTextResponse);
+    Conversation result = chatService.startConversation(userId);
 
     // Assert
     assertNotNull(result);
-    assertEquals("assistant", result.getRole());
-    assertEquals(plainTextResponse, result.getText());
+    Message assistantMsg = result.getMessages().get(0);
+    assertEquals(plainTextResponse, assistantMsg.getText());
   }
 
   /**
    * Test: checkRateLimit enforces per-user throttle.
-   * Verifies: first requests succeed, 3rd request within 1 sec is throttled.
+   * Verifies: first requests succeed, 3rd request within 1 sec throws exception.
    */
   @Test
-  void testCheckRateLimitThrottle() throws InterruptedException {
+  void testCheckRateLimitThrottle() throws Exception {
     // Arrange
     String userId = "user-123";
 
-    // Act & Assert - first two requests should succeed
-    assertTrue(chatService.checkRateLimit(userId)); // 1st request
-    assertTrue(chatService.checkRateLimit(userId)); // 2nd request
+    // Mock Gemini and repository for valid calls
+    when(geminiClient.callGemini(anyString())).thenReturn("{\"text\": \"Hello\"}");
+    when(conversationRepository.save(any(Conversation.class)))
+        .thenAnswer(invocation -> {
+          Conversation conv = invocation.getArgument(0);
+          conv.setId("conv-123");
+          return conv;
+        });
+
+    // Act & Assert - first two startConversation calls should succeed
+    chatService.startConversation(userId); // 1st request
+    chatService.startConversation(userId); // 2nd request
 
     // 3rd request within 1 second should fail (limit is 2/sec)
-    assertFalse(chatService.checkRateLimit(userId)); // 3rd request throttled
+    assertThrows(RuntimeException.class, () -> chatService.startConversation(userId));
   }
 
   /**
@@ -191,7 +219,7 @@ class ChatServiceTest {
 
   /**
    * Test: fetchConversation throws exception on ownership mismatch.
-   * Verifies: 403 Forbidden when userId doesn't match conversation owner.
+   * Verifies: SecurityException when userId doesn't match conversation owner.
    */
   @Test
   void testFetchConversationForbidden() {

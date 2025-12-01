@@ -19,15 +19,15 @@ import QuickOptions from './QuickOptions';
 
 const MOCK_RESPONSES = [
   {
-    response: 'Hello! I\'m BudgetPilot, your financial advisor. Let\'s help you manage your money better.',
+    text: 'Hello! I\'m BudgetPilot, your financial advisor. Let\'s help you manage your money better.',
     options: ['Review my budget', 'Track expenses', 'Plan savings goal', 'Get AI advice']
   },
   {
-    response: 'Great! Let\'s review your spending patterns from the last 3 months.',
+    text: 'Great! Let\'s review your spending patterns from the last 3 months.',
     options: ['Show summary', 'Detailed breakdown', 'Compare months']
   },
   {
-    response: 'Your total spending is trending upward. I recommend setting savings alerts.',
+    text: 'Your total spending is trending upward. I recommend setting savings alerts.',
     options: ['Set alert', 'View recommendations', 'Continue chat']
   },
 ];
@@ -43,7 +43,7 @@ const getCannedResponse = () => {
 export default function ChatWindow({ onClose }) {
   const { token } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
-  const useMockMode = process.env.REACT_APP_USE_CHAT_MOCK === 'true';
+  const useMockMode = import.meta.env.VITE_USE_CHAT_MOCK === 'true';
 
   const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -81,7 +81,7 @@ export default function ChatWindow({ onClose }) {
     const mockResponse = getCannedResponse();
     const assistantMsg = {
       role: 'assistant',
-      text: mockResponse.response,
+      text: mockResponse.text,
       options: mockResponse.options,
       timestamp: new Date().toISOString(),
     };
@@ -147,7 +147,7 @@ export default function ChatWindow({ onClose }) {
         const mockResponse = getCannedResponse();
         const assistantMsg = {
           role: 'assistant',
-          text: mockResponse.response,
+          text: mockResponse.text,
           options: mockResponse.options,
           timestamp: new Date().toISOString(),
         };
