@@ -2,13 +2,10 @@ import { useState, useContext } from "react";
 import axios from "../../api/axios";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import PasswordInput from "./PasswordInput";
 
 function RegisterForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
@@ -16,7 +13,7 @@ function RegisterForm() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(""); // Clear error when user types
+    setError("");
   };
 
   const handleRegister = async (e) => {
@@ -24,119 +21,157 @@ function RegisterForm() {
     setLoading(true);
     setError("");
 
-    // Validate inputs
     if (!formData.name || !formData.email || !formData.password) {
-      setError("All fields are required");
+      setError("Please fill all fields to continue.");
       setLoading(false);
       return;
     }
-    // Email validation
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (!emailRegex.test(formData.email)) {
-  setError("Please enter a valid email address");
-  setLoading(false);
-  return;
-}
 
-// Password validation
-if (formData.password.length < 8) {
-  setError("Password must be at least 8 characters long");
-  setLoading(false);
-  return;
-}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      setLoading(false);
+      return;
+    }
 
     try {
-      // Register the user
-      const registerRes = await axios.post("/auth/register", formData);
-      
-      // Auto-login after registration
-      const loginRes = await axios.post("/auth/login", {
-        email: formData.email,
-        password: formData.password
-      });
-
-      if (!loginRes.data?.token) {
-        throw new Error("Login failed after registration");
-      }
-
-      // Use the login function from AuthContext
+      await axios.post("/auth/register", formData);
+      const loginRes = await axios.post("/auth/login", { email: formData.email, password: formData.password });
+      if (!loginRes.data?.token) throw new Error("Login failed after registration");
       await login(loginRes.data.token, loginRes.data.user);
-      
-      // Navigate to profile setup
-      alert("Registration successful! Please check your email to verify your account before logging in.");
       navigate("/setup-profile");
     } catch (err) {
       console.error("Registration error:", err);
-      setError(
-        err.response?.data?.message || 
-        err.response?.data || 
-        err.message || 
-        "Registration failed. Please check your connection and try again."
-      );
+      setError(err.response?.data?.message || err.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <form
-        onSubmit={handleRegister}
-        className="bg-white shadow-md rounded-lg p-6 w-96"
-      >
-        {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
-            {error}
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-slate-50">
+      <div className="max-w-2xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 bp-fade-in">
+        {/* Info Card */}
+        <div className="bp-card p-8 rounded-xl hidden md:flex flex-col justify-center">
+          <h2 className="text-2xl font-bold bp-gradient-text mb-4">Welcome to BudgetPilot</h2>
+          <p className="text-slate-700 mb-6">Join thousands of smart savers transforming their finances with AI-powered insights.</p>
+          
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="text-lg">📊</span>
+              <div>
+                <p className="font-semibold text-slate-900">Smart Analytics</p>
+                <p className="text-xs text-slate-600">Understand your spending patterns instantly</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">🤖</span>
+              <div>
+                <p className="font-semibold text-slate-900">AI Guidance</p>
+                <p className="text-xs text-slate-600">Personalized saving strategies for you</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">💰</span>
+              <div>
+                <p className="font-semibold text-slate-900">Goal Tracking</p>
+                <p className="text-xs text-slate-600">Build wealth with real progress tracking</p>
+              </div>
+            </div>
           </div>
-        )}
-        <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">
-          Register
-        </h2>
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          className="w-full p-2 border mb-3 rounded focus:outline-blue-400"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          className="w-full p-2 border mb-3 rounded focus:outline-blue-400"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          className="w-full p-2 border mb-4 rounded focus:outline-blue-400"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <button 
-          type="submit" 
-          disabled={loading}
-          className={`w-full py-2 rounded ${
-            loading 
-              ? "bg-green-400 cursor-not-allowed" 
-              : "bg-green-600 hover:bg-green-700"
-          } text-white`}
-        >
-          {loading ? "Registering..." : "Register"}
-        </button>
-        <p className="text-center mt-3 text-sm">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-500 hover:underline">
-            Login
-          </Link>
-        </p>
-      </form>
+        </div>
+
+        {/* Form Card */}
+        <div className="bp-card p-8 rounded-xl space-y-6">
+          {/* Header */}
+          <div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-1">Create Account</h3>
+            <p className="text-sm text-slate-600">Get started in under 2 minutes</p>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium">
+              ⚠️ {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleRegister} className="space-y-5">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Full Name</label>
+              <input
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="John Doe"
+                required
+                className="w-full"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Email Address</label>
+              <input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                required
+                className="w-full"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Password</label>
+              <PasswordInput
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+              />
+              <p className="text-xs text-slate-600 mt-1">Minimum 8 characters</p>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bp-btn-primary py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creating account...
+                </>
+              ) : (
+                <>🚀 Create Free Account</>
+              )}
+            </button>
+          </form>
+
+          {/* Sign In Link */}
+          <p className="text-center text-sm">
+            <span className="text-slate-600">Already have an account?</span>
+            {" "}
+            <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

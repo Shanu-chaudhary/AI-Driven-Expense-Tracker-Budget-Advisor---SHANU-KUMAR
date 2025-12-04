@@ -1,6 +1,8 @@
 import React, { useState, useContext } from 'react';
 import axios from '../../api/axios';
 import { ToastContext } from '../../context/ToastContext';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const BackupControls = () => {
   const [busy, setBusy] = useState(false);
@@ -61,21 +63,20 @@ const BackupControls = () => {
   };
 
   return (
-    <div className="bg-white rounded shadow p-4">
-      <h4 className="font-semibold mb-2">Backup & Cloud</h4>
+    <Card className="p-4">
+      <h4 className="font-semibold mb-4 text-slate-900">Backup & Cloud</h4>
       <div className="flex gap-2 flex-wrap">
-        <button onClick={downloadBackup} disabled={busy} className="bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-3 rounded">
+        <Button onClick={downloadBackup} disabled={busy} variant="success">
           {busy ? 'Preparing...' : 'Download Backup (JSON)'}
-        </button>
-        <button onClick={()=>alert('Google Drive backup requires OAuth setup. See README.')} className="bg-blue-600 hover:bg-blue-500 text-white py-2 px-3 rounded">
+        </Button>
+        <Button onClick={()=>alert('Google Drive backup requires OAuth setup. See README.')} variant="secondary">
           Backup to Google Drive
-        </button>
-        <button onClick={()=>alert('Dropbox backup requires OAuth setup. See README.')} className="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-3 rounded">
+        </Button>
+        <Button onClick={()=>alert('Dropbox backup requires OAuth setup. See README.')} variant="secondary">
           Backup to Dropbox
-        </button>
+        </Button>
       </div>
-      {/* <p className="text-sm text-gray-500 mt-2">Download a local backup, or connect a cloud provider. Cloud integration requires OAuth credentials — see project README for server-side setup.</p> */}
-    </div>
+    </Card>
   );
 };
 

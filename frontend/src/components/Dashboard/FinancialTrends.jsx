@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../api/axios';
+import Card from '../ui/Card.jsx';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -122,12 +123,12 @@ const FinancialTrends = ({ month }) => {
       {
         label: 'Income',
         data: [monthIncome, prevIncome],
-        backgroundColor: '#16a34a',
+        backgroundColor: '#3B82F6',
       },
       {
         label: 'Expense',
         data: [monthExpense, prevExpense],
-        backgroundColor: '#dc2626',
+        backgroundColor: '#06B6D4',
       },
     ],
   };
@@ -138,8 +139,8 @@ const FinancialTrends = ({ month }) => {
       {
         data: Object.values(catMap),
         backgroundColor: Object.keys(catMap).map((_, i) => {
-          // pick visually distinct colors
-          const palette = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#06b6d4', '#3b82f6', '#7c3aed', '#ec4899'];
+          // pick visually distinct colors with modern blue/cyan palette
+          const palette = ['#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899', '#F59E0B', '#EF4444', '#10B981', '#0288d1', '#00BCD4', '#00ACC1'];
           return palette[i % palette.length];
         }),
         hoverOffset: 8,
@@ -153,7 +154,7 @@ const FinancialTrends = ({ month }) => {
       {
         label: 'Amount',
         data: [monthIncome, monthExpense],
-        backgroundColor: ['#16a34a', '#dc2626'],
+        backgroundColor: ['#3B82F6', '#06B6D4'],
       },
     ],
   };
@@ -163,34 +164,44 @@ const FinancialTrends = ({ month }) => {
     maintainAspectRatio: false,
     animation: { duration: 700, easing: 'easeOutCubic' },
     plugins: {
-      legend: { position: 'bottom' },
-      tooltip: { mode: 'index', intersect: false },
+      legend: { position: 'bottom', labels: { color: '#1E293B', font: { size: 13, weight: 'bold' }, padding: 15 } },
+      tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#3B82F6', borderWidth: 2, padding: 10, displayColors: true },
+    },
+    scales: {
+      x: { ticks: { color: '#475569', font: { size: 11, weight: 'bold' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+      y: { ticks: { color: '#475569', font: { size: 11, weight: 'bold' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
     },
   };
 
   return (
-    <div className="mt-8 bg-white rounded shadow p-4">
-      <h3 className="text-lg font-semibold mb-3">Financial Trends & Visualization</h3>
+    <Card className="mt-8 p-6">
+      <h3 className="text-2xl font-bold mb-6 bp-gradient-text">Financial Trends & Visualization</h3>
       {loading ? (
-        <p className="text-sm text-gray-500">Loading charts...</p>
+        <p className="text-sm text-slate-600">Loading charts...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="col-span-1 md:col-span-2 p-2">
-            <div className="h-56 md:h-72">
-              <Bar data={comparisonData} options={{...commonOptions, plugins: { ...commonOptions.plugins, legend: { position: 'top' } }}} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Comparison Chart */}
+          <Card className="col-span-1 md:col-span-2 p-4 border border-blue-200">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Monthly Comparison</h4>
+            <div className="h-56 md:h-72 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-2">
+              <Bar data={comparisonData} options={{...commonOptions, plugins: { ...commonOptions.plugins, legend: { position: 'top', labels: { color: '#1E293B' } } }}} />
             </div>
-            <div className="text-sm text-gray-500 mt-2">Monthly income vs expense comparison (current vs previous month).</div>
-          </div>
+            <div className="text-xs text-slate-600 mt-3 text-center">Current vs Previous Month Income/Expense</div>
+          </Card>
 
-          <div className="col-span-1 p-2">
-            <div className="h-56 md:h-72">
+          {/* Pie Chart */}
+          <Card className="col-span-1 p-4 border border-cyan-200">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Spending Breakdown</h4>
+            <div className="h-56 md:h-72 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-2">
               <Pie data={pieData} options={commonOptions} />
             </div>
-            <div className="text-sm text-gray-500 mt-2">Category-wise spending breakdown for the selected month.</div>
-          </div>
+            <div className="text-xs text-slate-600 mt-3 text-center">Category-wise Distribution</div>
+          </Card>
 
-          <div className="col-span-1 md:col-span-3 p-2">
-            <div className="h-48 md:h-56">
+          {/* Line Chart */}
+          <Card className="col-span-1 md:col-span-3 p-4 border border-blue-200">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Monthly Trend</h4>
+            <div className="h-48 md:h-56 bg-gradient-to-br from-blue-50 to-slate-50 rounded-lg p-2">
               <Line
                 data={{
                   labels: ['Income', 'Expense'],
@@ -198,22 +209,26 @@ const FinancialTrends = ({ month }) => {
                     {
                       label: 'This Month',
                       data: [monthIncome, monthExpense],
-                      borderColor: monthIncome - monthExpense >= 0 ? '#06b6d4' : '#f97316',
-                      backgroundColor: 'rgba(6,182,212,0.08)',
+                      borderColor: '#3B82F6',
+                      backgroundColor: 'rgba(59,130,246,0.1)',
                       fill: true,
-                      tension: 0.3,
-                      pointRadius: 4,
+                      tension: 0.4,
+                      pointRadius: 6,
+                      pointBackgroundColor: '#06B6D4',
+                      pointBorderColor: '#fff',
+                      pointBorderWidth: 2.5,
+                      borderWidth: 3,
                     },
                   ],
                 }}
-                options={{ ...commonOptions, plugins: { ...commonOptions.plugins, legend: { display: false } } }}
+                options={{ ...commonOptions, plugins: { ...commonOptions.plugins, legend: { display: true, labels: { color: '#1E293B' } } } }}
               />
             </div>
-            <div className="text-sm text-gray-500 mt-2">Smooth income/expense trend (line) for quick glance.</div>
-          </div>
+            <div className="text-xs text-slate-600 mt-3 text-center">Income vs Expense Trend</div>
+          </Card>
         </div>
       )}
-    </div>
+    </Card>
   );
 };
 

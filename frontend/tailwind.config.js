@@ -8,6 +8,7 @@ export default {
     extend: {
       fontFamily: {
         inter: ["Inter", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       colors: {
         orange_peel: {
@@ -58,6 +59,12 @@ export default {
           400: '#249b8f',
           500: '#2ec4b6',
         },
+        bp: {
+          accent: '#0ea5a4',
+          accent2: '#6366f1',
+          card: 'rgba(255,255,255,0.06)',
+          muted: '#E6EEF8',
+        }
       },
     },
   },

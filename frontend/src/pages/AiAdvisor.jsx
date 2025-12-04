@@ -4,6 +4,8 @@ import AiAdviceModal from '../components/AI/AiAdviceModal';
 import TipCard from '../components/Tips/TipCard';
 import axios from '../api/axios';
 import { ToastContext } from '../context/ToastContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const AiAdvisor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,52 +87,47 @@ const AiAdvisor = () => {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto p-4">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">AI Budget Advisor</h1>
-          <p className="text-gray-600 mt-1">Get personalized financial advice powered by AI</p>
+          <h1 className="text-3xl font-bold bp-gradient-text">AI Budget Advisor</h1>
+          <p className="text-slate-600 mt-1">Get personalized financial advice powered by AI</p>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* AI Advice Column */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <Card className="p-6 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">AI-Powered Advice</h2>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="px-4 py-2 bg-orange_peel-500 text-white rounded hover:bg-orange_peel-600 transition"
-                >
-                  Generate Advice
-                </button>
+                <h2 className="text-xl font-semibold text-slate-900">AI-Powered Advice</h2>
+                <Button onClick={() => setIsModalOpen(true)}>Generate Advice</Button>
               </div>
 
               {advice ? (
                 <div className="space-y-4">
                   {/* Summary */}
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <h3 className="font-semibold text-gray-900 mb-2">Summary</h3>
-                    <p className="text-gray-700">{advice.summary}</p>
-                  </div>
+                  <Card className="p-4 bg-blue-50 border-l-4 border-blue-400">
+                    <h3 className="font-semibold text-slate-900 mb-2">Summary</h3>
+                    <p className="text-slate-700">{advice.summary}</p>
+                  </Card>
 
                   {/* Estimated Savings */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="text-sm text-gray-600">Estimated Savings Next Month</p>
+                    <Card className="p-4">
+                      <p className="text-sm text-slate-600">Estimated Savings Next Month</p>
                       <p className="text-2xl font-bold text-green-600">₹{advice.estimatedSavingsNextMonth?.toLocaleString('en-IN')}</p>
-                    </div>
-                    <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
-                      <p className="text-sm text-gray-600">Confidence Score</p>
-                      <p className="text-2xl font-bold text-purple-600">{advice.confidenceScore}%</p>
-                    </div>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-sm text-slate-600">Confidence Score</p>
+                      <p className="text-2xl font-bold text-blue-600">{advice.confidenceScore}%</p>
+                    </Card>
                   </div>
 
                   {/* Actions */}
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Recommended Actions</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">Recommended Actions</h3>
                     <ul className="space-y-2">
                       {advice.actions?.map((action, idx) => (
-                        <li key={idx} className="flex items-start text-gray-700">
-                          <span className="inline-block w-6 h-6 bg-orange_peel-500 text-white rounded-full text-center text-sm mr-3 mt-0.5 flex-shrink-0">
+                        <li key={idx} className="flex items-start text-slate-700">
+                          <span className="inline-block w-6 h-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full text-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0 flex items-center justify-center">
                             {idx + 1}
                           </span>
                           <span>{action}</span>
@@ -139,48 +136,38 @@ const AiAdvisor = () => {
                     </ul>
                   </div>
 
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full px-4 py-2 border border-orange_peel-500 text-orange_peel-500 rounded hover:bg-orange_peel-50 transition font-medium"
-                  >
-                    Regenerate Advice
-                  </button>
+                  <Button variant="ghost" onClick={() => setIsModalOpen(true)}>Regenerate Advice</Button>
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-600 mb-4">No advice generated yet</p>
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-6 py-3 bg-orange_peel-500 text-white rounded hover:bg-orange_peel-600 transition font-medium"
-                  >
-                    Generate Your First Advice
-                  </button>
+                  <p className="text-slate-600 mb-4">No advice generated yet</p>
+                  <Button onClick={() => setIsModalOpen(true)}>Generate Your First Advice</Button>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
 
           {/* Sidebar - Tips */}
           <div className="lg:col-span-1">
             <TipCard tips={tips} title="Rule-Based Tips" />
             {(computedAnalysis || analysis) && (
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="font-semibold mb-3">Spending Analysis</h3>
+              <Card className="p-4 mt-4">
+                <h3 className="font-semibold mb-3 text-slate-900">Spending Analysis</h3>
                 <div className="space-y-2 text-sm">
                   { (computedAnalysis?.savingRate ?? analysis?.savingRate) !== undefined && (
                     <div>
-                      <p className="text-gray-600">Saving Rate</p>
-                      <p className="font-bold text-lg">{((computedAnalysis?.savingRate ?? analysis?.savingRate) || 0).toFixed(1)}%</p>
+                      <p className="text-slate-600">Saving Rate</p>
+                      <p className="font-bold text-lg text-slate-900">{((computedAnalysis?.savingRate ?? analysis?.savingRate) || 0).toFixed(1)}%</p>
                     </div>
                   )}
                   { (computedAnalysis?.totalExpense ?? analysis?.totalExpense) !== undefined && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-gray-600">Total Expense (3 months)</p>
-                      <p className="font-bold text-lg">₹{Math.round((computedAnalysis?.totalExpense ?? analysis?.totalExpense) || 0).toLocaleString('en-IN')}</p>
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <p className="text-slate-600">Total Expense (3 months)</p>
+                      <p className="font-bold text-lg text-slate-900">₹{Math.round((computedAnalysis?.totalExpense ?? analysis?.totalExpense) || 0).toLocaleString('en-IN')}</p>
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         </div>

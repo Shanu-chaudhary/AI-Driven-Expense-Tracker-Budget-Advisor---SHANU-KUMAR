@@ -354,6 +354,8 @@ import axios from "../api/axios";
 import DashboardLayout from "../components/Layout/DashboardLayout";
 import { format } from "date-fns";
 import TransactionForm from "../components/Transactions/TransactionForm";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -620,65 +622,55 @@ export default function TransactionsPage() {
   return (
     <DashboardLayout>
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-6 text-light_sea_green-600">
+        <h2 className="text-2xl font-bold mb-6 bp-gradient-text">
           Add New Transaction
         </h2>
 
         <TransactionForm onTransactionAdded={handleTransactionAdded} onCategoryCreated={handleCategoryCreated} onCategoryDeleted={handleCategoryDeleted} />
 
-        <h2 className="text-xl font-bold my-6 text-light_sea_green-600">History</h2>
+        <h2 className="text-xl font-bold my-6 bp-gradient-text">History</h2>
 
         {/* Error / Popup */}
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+          <Card className="mb-4 p-3 border-l-4 border-red-500">
+            <p className="text-red-600">{error}</p>
+          </Card>
         )}
         {showPopup && !error && (
-          <div className="fixed top-5 right-5 bg-light_sea_green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          <div className="fixed top-5 right-5 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
             {popupMessage}
           </div>
         )}
 
         {/* Filters */}
         <div className="flex justify-center gap-3 mb-4">
-          <button
+          <Button
             onClick={() => applyFilter("all")}
-            className={`px-4 py-2 rounded-lg border ${
-              filterType === "all"
-                ? "bg-light_sea_green-500 text-white"
-                : "border-light_sea_green-500 text-light_sea_green-500 hover:bg-light_sea_green-50"
-            }`}
+            variant={filterType === "all" ? "primary" : "ghost"}
           >
             All
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => applyFilter("income")}
-            className={`px-4 py-2 rounded-lg border ${
-              filterType === "income"
-                ? "bg-green-500 text-white"
-                : "border-green-500 text-green-500 hover:bg-green-50"
-            }`}
+            variant={filterType === "income" ? "success" : "ghost"}
           >
             Income
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => applyFilter("expense")}
-            className={`px-4 py-2 rounded-lg border ${
-              filterType === "expense"
-                ? "bg-red-500 text-white"
-                : "border-red-500 text-red-500 hover:bg-red-50"
-            }`}
+            variant={filterType === "expense" ? "danger" : "ghost"}
           >
             Expense
-          </button>
+          </Button>
         </div>
 
         {/* Time Filter */}
         <div className="flex justify-center items-center gap-3 mb-6">
-          <label className="text-sm">Time:</label>
+          <label className="text-sm text-slate-900">Time:</label>
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="px-3 py-2 border rounded"
+            className="px-3 py-2 border border-blue-200 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
           >
             <option value="all">All</option>
             <option value="month">This Month</option>
@@ -691,36 +683,36 @@ export default function TransactionsPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="border p-2 rounded"
+                className="border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
               />
-              <span>—</span>
+              <span className="text-slate-900">—</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="border p-2 rounded"
+                className="border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
               />
             </div>
           )}
         </div>
 
         {/* Transaction List */}
-        <div className="bg-white shadow-md rounded-lg p-4 border border-orange_peel-200">
+        <Card className="p-4">
           {loading ? (
-            <p className="text-center text-gray-500">Loading transactions...</p>
+            <p className="text-center text-slate-600">Loading transactions...</p>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-gray-500">No transactions found.</p>
+            <p className="text-center text-slate-600">No transactions found.</p>
           ) : (
-            <ul className="divide-y" ref={listRef}>
+            <ul className="divide-y divide-blue-100" ref={listRef}>
               {filtered.map((txn, index) => (
                 <li
                   key={txn._id || txn.id || index}
                   className="py-4 flex justify-between items-center"
                 >
                   <div>
-                    <p className="font-medium">{getCategoryDisplay(txn)}</p>
-                    <p className="text-sm text-gray-500">{txn.description || "-"}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="font-medium text-slate-900">{getCategoryDisplay(txn)}</p>
+                    <p className="text-sm text-slate-600">{txn.description || "-"}</p>
+                    <p className="text-xs text-slate-500">
                       {txn.date ? format(new Date(txn.date), "dd MMM yyyy") : "-"}
                     </p>
                   </div>
@@ -736,44 +728,50 @@ export default function TransactionsPage() {
                     </p>
 
                     <div className="space-x-2 mt-1">
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => {
                           setSelectedTxn(txn);
                           setIsEditing(false);
                         }}
-                        className="text-light_sea_green-500 hover:underline"
+                        className="text-slate-700 hover:text-slate-900 text-sm px-2 py-1"
                       >
                         View
-                      </button>
+                      </Button>
 
-                      <button onClick={() => handleEdit(txn)} className="text-orange_peel-500 hover:underline">
+                      <Button 
+                        variant="ghost"
+                        onClick={() => handleEdit(txn)}
+                        className="text-slate-700 hover:text-slate-900 text-sm px-2 py-1"
+                      >
                         Edit
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
+                        variant="danger"
                         onClick={() => handleDelete(txn._id || txn.id)}
-                        className="text-red-500 hover:underline"
+                        className="text-sm px-2 py-1"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
 
         {/* Modal */}
         {selectedTxn && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-              <h3 className="text-xl font-semibold mb-4">{isEditing ? "Edit Transaction" : "Transaction Details"}</h3>
+            <Card className="p-6 w-full max-w-md">
+              <h3 className="text-xl font-semibold mb-4 bp-gradient-text">{isEditing ? "Edit Transaction" : "Transaction Details"}</h3>
 
               <div className="space-y-3">
                 {/* Category: show dropdown of user's categories OR fallback to simple input */}
                 <div>
-                  <label className="block text-sm font-medium">Category</label>
+                  <label className="block text-sm font-medium text-slate-900">Category</label>
 
                   {/* If categories are available show dropdown (selectedTxn.category expected to be id or name) */}
                   {categories.length > 0 ? (
@@ -781,7 +779,7 @@ export default function TransactionsPage() {
                       value={selectedTxn.category ?? ""}
                       onChange={(e) => setSelectedTxn({ ...selectedTxn, category: e.target.value })}
                       disabled={!isEditing}
-                      className="w-full border p-2 rounded"
+                      className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                     >
                       <option value="">Select Category</option>
                       {categories
@@ -802,39 +800,39 @@ export default function TransactionsPage() {
                       value={selectedTxn.category ?? ""}
                       onChange={(e) => setSelectedTxn({ ...selectedTxn, category: e.target.value })}
                       disabled={!isEditing}
-                      className="w-full border p-2 rounded"
+                      className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                     />
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Amount</label>
+                  <label className="block text-sm font-medium text-slate-900">Amount</label>
                   <input
                     type="number"
                     value={selectedTxn.amount ?? ""}
                     onChange={(e) => setSelectedTxn({ ...selectedTxn, amount: e.target.value })}
                     disabled={!isEditing}
-                    className="w-full border p-2 rounded"
+                    className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Description</label>
+                  <label className="block text-sm font-medium text-slate-900">Description</label>
                   <textarea
                     value={selectedTxn.description || ""}
                     onChange={(e) => setSelectedTxn({ ...selectedTxn, description: e.target.value })}
                     disabled={!isEditing}
-                    className="w-full border p-2 rounded"
+                    className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Type</label>
+                  <label className="block text-sm font-medium text-slate-900">Type</label>
                   <select
                     value={selectedTxn.type}
                     onChange={(e) => setSelectedTxn({ ...selectedTxn, type: e.target.value })}
                     disabled={!isEditing}
-                    className="w-full border p-2 rounded"
+                    className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                   >
                     <option value="income">Income</option>
                     <option value="expense">Expense</option>
@@ -842,28 +840,28 @@ export default function TransactionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Date</label>
+                  <label className="block text-sm font-medium text-slate-900">Date</label>
                   <input
                     type="date"
                     value={selectedTxn.date ? new Date(selectedTxn.date).toISOString().slice(0, 10) : ""}
                     onChange={(e) => setSelectedTxn({ ...selectedTxn, date: e.target.value })}
                     disabled={!isEditing}
-                    className="w-full border p-2 rounded"
+                    className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900 focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
                   />
                 </div>
 
                 <div className="flex justify-end space-x-3 mt-4">
                   {isEditing && (
-                    <button onClick={handleSaveEdit} className="bg-light_sea_green-500 text-white px-4 py-2 rounded hover:bg-light_sea_green-400">
+                    <Button onClick={handleSaveEdit} variant="primary">
                       Save
-                    </button>
+                    </Button>
                   )}
-                  <button onClick={() => setSelectedTxn(null)} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">
+                  <Button variant="ghost" onClick={() => setSelectedTxn(null)}>
                     Close
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>

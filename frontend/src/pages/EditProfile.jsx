@@ -310,6 +310,8 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Country, State, City } from "country-state-city";
 import DashboardLayout from "../components/Layout/DashboardLayout";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 export default function EditProfile() {
   const { refreshUser } = useContext(AuthContext);
@@ -418,44 +420,47 @@ export default function EditProfile() {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <h2 className="text-3xl font-bold text-[#FFA500] mb-6 border-b pb-2">
+      <div className="p-6 max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold bp-gradient-text mb-6">
           Edit Profile
         </h2>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+          <Card className="mb-4 p-3 border-l-4 border-red-500">
+            <p className="text-red-600">{error}</p>
+          </Card>
         )}
 
+        <Card className="p-6 space-y-6">
         <form
           onSubmit={handleSubmit}
-          className="bg-white shadow-md rounded-2xl p-6 space-y-6 border border-gray-200"
+          className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Profile Image */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Profile Image
               </label>
               {profile.profileImageUrl && (
                 <img
                   src={profile.profileImageUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full mb-3 object-cover border-4 border-[#20B2AA]"
+                  className="w-32 h-32 rounded-full mb-3 object-cover border-4 border-blue-200"
                 />
               )}
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full border border-blue-200 rounded-lg p-2 bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 disabled={imageLoading}
               />
             </div>
 
             {/* Full Name */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Full Name
               </label>
               <input
@@ -464,14 +469,14 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, fullName: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
 
             {/* Display Name */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Display Name
               </label>
               <input
@@ -480,14 +485,14 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, displayName: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
 
             {/* Gender */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Gender
               </label>
               <select
@@ -495,7 +500,7 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, gender: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               >
                 <option value="">Select Gender</option>
@@ -507,7 +512,7 @@ export default function EditProfile() {
 
             {/* Country */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Country
               </label>
               <select
@@ -520,7 +525,7 @@ export default function EditProfile() {
                     city: "",
                   })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               >
                 <option value="">Select Country</option>
@@ -534,7 +539,7 @@ export default function EditProfile() {
 
             {/* State */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 State
               </label>
               <select
@@ -546,7 +551,7 @@ export default function EditProfile() {
                     city: "",
                   })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               >
                 <option value="">Select State</option>
@@ -560,13 +565,13 @@ export default function EditProfile() {
 
             {/* City */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">City</label>
+              <label className="block mb-2 font-medium text-slate-900">City</label>
               <select
                 value={profile.city}
                 onChange={(e) =>
                   setProfile({ ...profile, city: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               >
                 <option value="">Select City</option>
@@ -580,7 +585,7 @@ export default function EditProfile() {
 
             {/* Phone Number */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Phone Number
               </label>
               <input
@@ -589,14 +594,14 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, phoneNumber: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
 
             {/* Time Zone */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Time Zone
               </label>
               <input
@@ -605,14 +610,14 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, timeZone: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
 
             {/* Currency */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Currency
               </label>
               <input
@@ -621,14 +626,14 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, currency: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
 
             {/* Language */}
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className="block mb-2 font-medium text-slate-900">
                 Language
               </label>
               <input
@@ -637,7 +642,7 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setProfile({ ...profile, language: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full p-2 border border-blue-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-400"
                 required
               />
             </div>
@@ -645,22 +650,15 @@ export default function EditProfile() {
 
           {/* Buttons */}
           <div className="flex justify-end gap-4 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate("/me")}
-              className="px-5 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition"
-            >
+            <Button variant="ghost" onClick={() => navigate("/me")}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || imageLoading}
-              className="px-5 py-2 bg-[#FFA500] text-white rounded-lg hover:bg-[#e59400] transition disabled:bg-orange-300"
-            >
+            </Button>
+            <Button type="submit" disabled={loading || imageLoading}>
               {loading ? "Saving..." : "Save Changes"}
-            </button>
+            </Button>
           </div>
         </form>
+        </Card>
       </div>
     </DashboardLayout>
   );

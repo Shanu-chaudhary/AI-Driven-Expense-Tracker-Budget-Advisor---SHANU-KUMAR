@@ -29,6 +29,9 @@ public class ChatController {
     private ChatService chatService;
     
     @Autowired
+    private com.shanu.backend.client.GeminiClient geminiClient;
+    
+    @Autowired
     private AuthService authService;
 
     /**
@@ -163,6 +166,22 @@ public class ChatController {
             return ResponseEntity.ok(conversations);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * DEBUG: Call Gemini directly to reproduce API errors without authentication.
+     * POST /api/chat/debug/gemini
+     * Body: { "prompt": "..." } (optional)
+     */
+    @PostMapping("/debug/gemini")
+    public ResponseEntity<?> debugGemini(@RequestBody(required = false) Map<String, String> body) {
+        try {
+            String prompt = (body != null && body.containsKey("prompt")) ? body.get("prompt") : "Debug ping from server";
+            String resp = geminiClient.callGemini(prompt);
+            return ResponseEntity.ok(Map.of("response", resp));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage(), "exception", e.toString()));
         }
     }
 }

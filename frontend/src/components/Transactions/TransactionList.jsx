@@ -272,6 +272,7 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import axios from "../../api/axios";
 import { format } from "date-fns";
+import Card from "../ui/Card";
 
 const TransactionList = forwardRef(({ limit }, ref) => {
   const [transactions, setTransactions] = useState([]);
@@ -305,28 +306,28 @@ const TransactionList = forwardRef(({ limit }, ref) => {
     },
   }));
 
-  if (loading) return <div className="text-center text-gray-500 py-4">Loading...</div>;
-  if (!transactions.length) return <div className="text-center text-gray-500 py-4">No transactions yet.</div>;
+  if (loading) return <div className="text-center text-slate-600 py-4">Loading...</div>;
+  if (!transactions.length) return <div className="text-center text-slate-400 py-4">No transactions yet.</div>;
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 border border-hunyadi_yellow-200">
-      <h3 className="text-xl font-semibold mb-3 text-light_sea_green-500">Transactions</h3>
-      <ul className="divide-y">
+    <Card className="p-4">
+      <h3 className="text-xl font-semibold mb-3 text-slate-900">Transactions</h3>
+      <ul className="divide-y divide-blue-100">
         {transactions.map((txn) => (
-          <li key={txn._id || txn.id} className="py-3 flex justify-between items-center">
+          <li key={txn._id || txn.id} className="py-3 flex justify-between items-center hover:bg-blue-50 px-2 -mx-2 rounded transition">
             <div className="flex items-center gap-3">
               <span
                 className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                   txn.type === "income"
-                    ? "bg-mint_green-100 text-green-700"
-                    : "bg-orange_peel-100 text-red-700"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
                 }`}
               >
                 {txn.type}
               </span>
               <div>
-                <p className="font-medium">{txn.category}</p>
-                <p className="text-sm text-gray-500">{txn.description || "-"}</p>
+                <p className="font-medium text-slate-900">{txn.category}</p>
+                <p className="text-sm text-slate-600">{txn.description || "-"}</p>
               </div>
             </div>
 
@@ -339,14 +340,14 @@ const TransactionList = forwardRef(({ limit }, ref) => {
                 {txn.type === "income" ? "+" : "-"}
                 {Number(txn.amount).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-600">
                 {txn.date ? format(new Date(txn.date), "dd MMM yyyy") : ""}
               </p>
             </div>
           </li>
         ))}
       </ul>
-    </div>
+    </Card>
   );
 });
 

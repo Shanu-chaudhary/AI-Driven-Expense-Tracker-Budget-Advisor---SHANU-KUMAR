@@ -2,12 +2,10 @@ import { useState, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import PasswordInput from "./PasswordInput";
 
 function LoginForm() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
@@ -23,89 +21,119 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    // Validate inputs
     if (!formData.email || !formData.password) {
-      setError("All fields are required");
+      setError("Please enter both email and password.");
       setLoading(false);
       return;
     }
 
     try {
       const res = await axios.post("/auth/login", formData);
-      
-      if (!res.data?.token) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Use the login function from AuthContext
+      if (!res.data?.token) throw new Error("Invalid response from server");
       await login(res.data.token, res.data.user);
-
-      // Redirect based on profile completion
-      if (res.data.user?.profileComplete) {
-        navigate("/dashboard");
-      } else {
-        navigate("/setup-profile");
-      }
+      if (res.data.user?.profileComplete) navigate("/dashboard");
+      else navigate("/setup-profile");
     } catch (err) {
       console.error("Login error:", err);
-      setError(
-        err.response?.data?.message || 
-        err.response?.data || 
-        "Invalid email or password"
-      );
+      setError(err.response?.data?.message || err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-          {error}
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-slate-50">
+      <div className="max-w-md w-full space-y-8 bp-fade-in">
+        {/* Header */}
+        <div className="text-center">
+          <div className="inline-block mb-4">
+            <div className="text-4xl font-bold bp-gradient-text">💰 BudgetPilot</div>
+          </div>
+          <p className="text-lg font-semibold text-slate-900 mb-2">Smart Expense Tracking</p>
+          <p className="text-sm text-slate-600">AI-powered insights to transform your finances</p>
         </div>
-      )}
-      <form
-        onSubmit={handleLogin}
-        className="bg-white shadow-md rounded-lg p-6 w-80"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Login</h2>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          className="w-full p-2 border mb-3 rounded focus:outline-blue-400"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          className="w-full p-2 border mb-4 rounded focus:outline-blue-400"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <button 
-          type="submit" 
-          disabled={loading}
-          className={`w-full py-2 rounded ${
-            loading 
-              ? "bg-blue-400 cursor-not-allowed" 
-              : "bg-blue-600 hover:bg-blue-700"
-          } text-white`}
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-        <p className="text-center mt-3 text-sm">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-blue-500 hover:underline">
-            Register
-          </Link>
-        </p>
-      </form>
+
+        {/* Login Card */}
+        <div className="bp-card p-8 rounded-xl space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium">
+              ⚠️ {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Email Address</label>
+              <input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                className="w-full"
+                required
+              />
+            </div>
+
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Password</label>
+              <PasswordInput
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bp-btn-primary flex items-center justify-center gap-2 py-3 font-semibold disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Signing in...
+                </>
+              ) : (
+                <>✨ Sign In to BudgetPilot</>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative flex items-center">
+            <div className="flex-1 bp-divider"></div>
+            <span className="px-3 text-xs text-slate-600">OR</span>
+            <div className="flex-1 bp-divider"></div>
+          </div>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-sm">
+            <span className="text-slate-600">Don't have an account?</span>
+            {" "}
+            <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition">
+              Create one
+            </Link>
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-xs text-slate-600 space-y-2">
+          <p className="font-semibold text-slate-900">Why Choose BudgetPilot?</p>
+          <ul className="space-y-1 text-xs">
+            <li>✓ AI-Powered Financial Insights</li>
+            <li>✓ Smart Budgeting & Tracking</li>
+            <li>✓ Personalized Money Tips</li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }

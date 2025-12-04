@@ -2,6 +2,9 @@
 // src/components/Transactions/TransactionForm.jsx
 import React, { useState, useEffect } from "react";
 import axios from "../../api/axios";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
 
 export default function TransactionForm({ onTransactionAdded, onCategoryCreated, onCategoryDeleted }) {
   const [formData, setFormData] = useState({
@@ -163,64 +166,61 @@ export default function TransactionForm({ onTransactionAdded, onCategoryCreated,
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 mb-4 border border-mint_green-300">
-      {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
+    <Card className="mb-4 p-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <div className="mb-3 text-sm text-red-400 bg-red-500/10 px-3 py-2 rounded">{error}</div>}
 
-      <div className="flex flex-wrap gap-3 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
         <select
           value={formData.type}
           onChange={(e) => handleChange("type", e.target.value)}
-          className="border p-2 rounded w-36"
+          className="col-span-1 bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
 
-        <div className="relative w-64">
+        <div className="relative col-span-2">
           <div className="flex">
             <input
               type="text"
               placeholder="Search or select category"
               value={
-                // show name when id selected
                 (() => {
                   const sel = formData.category;
                   if (!sel) return searchQuery;
                   const found = categories.find(c => c._id === sel || c.id === sel);
                   if (found) return found.name;
-                  // maybe it's a default name
                   return sel;
                 })()
               }
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setDropdownOpen(true);
-                // clear selection when typing
                 if (formData.category) handleChange('category', '');
               }}
               onFocus={() => setDropdownOpen(true)}
-              className="border p-2 rounded-l w-full"
+              className="bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-l-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400"
             />
-            <button type="button" onClick={() => { setCreating(true); setDropdownOpen(false); }} className="border p-2 rounded-r bg-orange_peel-500 text-white">+</button>
+            <button type="button" onClick={() => { setCreating(true); setDropdownOpen(false); }} className="border border-l-0 border-blue-200 px-3 py-2 rounded-r-lg bg-blue-600 hover:bg-blue-700 text-white transition">+</button>
           </div>
 
           {dropdownOpen && (
-            <div className="absolute z-50 mt-1 w-full bg-white border rounded shadow max-h-60 overflow-auto">
+            <div className="absolute z-50 mt-1 w-full bg-white border border-blue-200 rounded-lg shadow-lg max-h-60 overflow-auto">
               <div className="p-2">
-                <input className="w-full border p-1 rounded" placeholder="Filter..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <input className="w-full bg-white border border-blue-200 text-slate-900 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Filter..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
               <ul>
                 {mergedCategories.filter(c => (c.name || '').toLowerCase().includes((searchQuery||'').toLowerCase())).map(c => (
-                  <li key={c._id} className="flex justify-between items-center p-2 hover:bg-gray-50">
-                    <button type="button" onClick={() => { handleChange('category', c._id); setDropdownOpen(false); setSearchQuery(''); }} className="text-left flex-1">{c.name}</button>
-                    {/* allow deletion for real backend categories (those with an id different from their name) */}
+                  <li key={c._id} className="flex justify-between items-center px-3 py-2 hover:bg-blue-50 border-b border-blue-100 last:border-b-0">
+                    <button type="button" onClick={() => { handleChange('category', c._id); setDropdownOpen(false); setSearchQuery(''); }} className="text-left flex-1 text-slate-900 hover:text-blue-600">{c.name}</button>
                     {categories.find(ct => ct._id === c._id) ? (
-                      <button type="button" onClick={() => handleDeleteCategory(c)} className="ml-2 text-red-500 px-2">Delete</button>
+                      <button type="button" onClick={() => handleDeleteCategory(c)} className="ml-2 text-red-400 hover:text-red-300 px-2 text-sm">Delete</button>
                     ) : null}
                   </li>
                 ))}
-                <li className="p-2 border-t">
-                  <button type="button" onClick={() => { setCreating(true); setDropdownOpen(false); }} className="w-full text-left text-orange_peel-500">+ Add new category</button>
+                <li className="px-3 py-2 border-t border-blue-100">
+                  <button type="button" onClick={() => { setCreating(true); setDropdownOpen(false); }} className="w-full text-left text-blue-600 hover:text-blue-700">+ Add new category</button>
                 </li>
               </ul>
             </div>
@@ -229,34 +229,34 @@ export default function TransactionForm({ onTransactionAdded, onCategoryCreated,
 
         {/* Show inline create input when user selects add new */}
         {formData.category === "__add_new__" || creating ? (
-          <div className="flex items-center gap-2">
+          <div className="col-span-3 flex items-center gap-2">
             <input
               type="text"
               placeholder={`New ${formData.type} category`}
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
-              className="border p-2 rounded"
+              className="bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400"
             />
-            <button type="button" onClick={handleCreateCategory}
-              className="px-3 py-2 bg-orange_peel-500 text-white rounded hover:bg-orange_peel-600">
+            <Button size="sm" onClick={handleCreateCategory} disabled={loading}>
               {loading ? "Saving..." : "Create"}
-            </button>
-            <button type="button" onClick={() => { setCreating(false); setNewCategoryName(""); setFormData(prev => ({ ...prev, category: "" })) }} className="px-2 py-1 border rounded">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setCreating(false); setNewCategoryName(""); setFormData(prev => ({ ...prev, category: "" })) }}>
               Cancel
-            </button>
+            </Button>
           </div>
         ) : null}
 
-        <input type="number" step="0.01" placeholder="Amount" value={formData.amount} onChange={(e) => handleChange("amount", e.target.value)} className="border p-2 rounded w-28" required />
+        <input type="number" step="0.01" placeholder="Amount" value={formData.amount} onChange={(e) => handleChange("amount", e.target.value)} className="col-span-1 bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400" required />
 
-        <input type="date" value={formData.date} onChange={(e) => handleChange("date", e.target.value)} className="border p-2 rounded" required />
+        <input type="date" value={formData.date} onChange={(e) => handleChange("date", e.target.value)} className="col-span-1 bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer" required />
 
-        <input type="text" placeholder="Description (optional)" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} className="border p-2 rounded flex-1 min-w-[180px]" />
+        <input type="text" placeholder="Description (optional)" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} className="col-span-1 bg-white border border-blue-200 text-slate-900 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-slate-400" />
+        </div>
 
-        <button type="submit" disabled={loading} className={`px-4 py-2 rounded ${loading ? 'bg-orange_peel-400 cursor-not-allowed' : 'bg-orange_peel-500 hover:bg-orange_peel-600 text-white'}`}>
-          {loading ? "Adding..." : "Add"}
-        </button>
-      </div>
-    </form>
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? "Adding..." : "Add Transaction"}
+        </Button>
+      </form>
+    </Card>
   );
 }

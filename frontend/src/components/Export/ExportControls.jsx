@@ -4,6 +4,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Chart from 'chart.js/auto';
 import { ToastContext } from '../../context/ToastContext';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const ExportControls = ({ month }) => {
   const [exporting, setExporting] = useState(false);
@@ -140,7 +142,7 @@ const ExportControls = ({ month }) => {
       let cursorY = 40;
 
       // Header - project name and note
-      doc.setFillColor(249, 115, 22); // orange (tailwind orange-500-ish)
+      doc.setFillColor(168, 85, 247); // purple (tailwind purple-500-ish)
       doc.rect(0, 0, pageWidth, 60, 'F');
       doc.setTextColor(255,255,255);
       doc.setFontSize(18);
@@ -182,7 +184,7 @@ const ExportControls = ({ month }) => {
         type: 'bar',
         data: {
           labels,
-          datasets: [{ label: 'Expense by Category', data: dataVals, backgroundColor: labels.map((_,i)=>['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#06b6d4','#3b82f6'][i%8]) }]
+          datasets: [{ label: 'Expense by Category', data: dataVals, backgroundColor: labels.map((_,i)=>['#a855f7','#d946ef','#ec4899','#f43f5e','#f97316','#eab308','#84cc16','#22c55e'][i%8]) }]
         },
         options: { responsive: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false } } } }
       });
@@ -198,7 +200,7 @@ const ExportControls = ({ month }) => {
         head: [['Date', 'Category', 'Type', 'Amount', 'Description', 'Cat Budget', 'Remaining']],
         body: tableBody,
         styles: { fontSize: 9, cellPadding: 4 },
-        headStyles: { fillColor: [249,115,22], textColor: 255 },
+        headStyles: { fillColor: [168,85,247], textColor: 255 },
         alternateRowStyles: { fillColor: [245,245,245] },
         columnStyles: {
           3: { halign: 'right' },
@@ -218,28 +220,28 @@ const ExportControls = ({ month }) => {
   };
 
   return (
-    <div className="bg-white rounded shadow p-4">
-      <h4 className="font-semibold mb-2">Export Financial Data</h4>
-      <div className="flex gap-2 items-center mb-3">
-        <label className="text-sm">From:</label>
-        <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="border rounded p-1" />
-        <label className="text-sm">To:</label>
-        <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="border rounded p-1" />
-        <select value={categoryFilter} onChange={(e)=>setCategoryFilter(e.target.value)} className="border rounded p-1">
+    <Card className="p-4">
+      <h4 className="font-semibold mb-4 text-slate-900">Export Financial Data</h4>
+      <div className="flex gap-2 items-center mb-4 flex-wrap">
+        <label className="text-sm text-slate-600">From:</label>
+        <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="border border-blue-200 rounded p-2 bg-white text-slate-900 focus:ring-2 focus:ring-blue-400" />
+        <label className="text-sm text-slate-600">To:</label>
+        <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="border border-blue-200 rounded p-2 bg-white text-slate-900 focus:ring-2 focus:ring-blue-400" />
+        <select value={categoryFilter} onChange={(e)=>setCategoryFilter(e.target.value)} className="border border-blue-200 rounded p-2 bg-white text-slate-900 focus:ring-2 focus:ring-blue-400">
           <option value="">All categories</option>
           {categories.map(c => <option key={c._id || c.id} value={c.name}>{c.name}</option>)}
         </select>
       </div>
       <div className="flex gap-2 flex-wrap">
-        <button onClick={downloadCSV} disabled={exporting} className="bg-orange_peel-500 hover:bg-orange_peel-400 text-white py-2 px-3 rounded">
+        <Button onClick={downloadCSV} disabled={exporting} variant="primary">
           {exporting ? 'Exporting...' : 'Export CSV'}
-        </button>
-        <button onClick={downloadPDF} disabled={exporting} className="bg-sky-600 hover:bg-sky-500 text-white py-2 px-3 rounded">
+        </Button>
+        <Button onClick={downloadPDF} disabled={exporting} variant="secondary">
           {exporting ? 'Exporting...' : 'Export PDF'}
-        </button>
+        </Button>
       </div>
-      <p className="text-sm text-gray-500 mt-2">CSV includes basic fields; PDF is a simple formatted export suitable for printing.</p>
-    </div>
+      <p className="text-sm text-slate-600 mt-3">CSV includes basic fields; PDF is a simple formatted export suitable for printing.</p>
+    </Card>
   );
 };
 

@@ -28,11 +28,11 @@ import ChatWidget from "../Chat/ChatWidget";
 
 const DashboardLayout = ({ children }) => {
   return (
-    <div className="flex h-screen bg-mint_green-900">
+    <div className="flex h-screen bg-white">
       <Sidebar />
       <div className="flex flex-col flex-1">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-blue-50 to-slate-50">{children}</main>
       </div>
       {/* Chat Widget - floating button and modal */}
       <ChatWidget />

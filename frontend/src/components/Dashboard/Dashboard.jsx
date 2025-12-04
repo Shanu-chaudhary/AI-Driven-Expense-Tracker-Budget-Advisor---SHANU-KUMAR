@@ -4,6 +4,8 @@ import ProfileCard from "./ProfileCard";
 import FinancialTrends from "./FinancialTrends";
 import TipCard from "../Tips/TipCard";
 import AiHistoryCard from "../AI/AiHistoryCard";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
 import { AuthContext } from "../../context/AuthContext";
 import TransactionForm from "../Transactions/TransactionForm";
 import TransactionList from "../Transactions/TransactionList";
@@ -118,7 +120,7 @@ const Dashboard = () => {
   }, [summaryMonth]);
 
   if (loading) {
-    return <p className="text-center text-gray-500">Loading dashboard...</p>;
+    return <p className="text-center text-slate-600">Loading dashboard...</p>;
   }
 
 
@@ -137,42 +139,46 @@ const Dashboard = () => {
 
         {/* Summary placed below profile card */}
         <div className="mt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="p-5 bg-gradient-to-br from-white to-green-50 border-2 border-green-200">
+              <div className="text-xs font-semibold text-slate-600 mb-2">💸 Income</div>
+              <div className="text-3xl font-black bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent">
+                {summaryLoading ? '...' : `+₹${incomeTotal.toLocaleString()}`}
+              </div>
+            </Card>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded shadow">
-              <div className="text-sm text-gray-500">💸 Income</div>
-              <div className="text-2xl font-semibold text-green-600">
-                {summaryLoading ? '...' : `+${incomeTotal.toLocaleString()}`}
+            <Card className="p-5 bg-gradient-to-br from-white to-red-50 border-2 border-red-200">
+              <div className="text-xs font-semibold text-slate-600 mb-2">🧾 Expense</div>
+              <div className="text-3xl font-black bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent">
+                {summaryLoading ? '...' : `-₹${expenseTotal.toLocaleString()}`}
               </div>
-            </div>
-            <div className="bg-white p-4 rounded shadow">
-              <div className="text-sm text-gray-500">🧾 Expense</div>
-              <div className="text-2xl font-semibold text-red-600">
-                {summaryLoading ? '...' : `-${expenseTotal.toLocaleString()}`}
+            </Card>
+
+            <Card className="p-5 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200">
+              <div className="text-xs font-semibold text-slate-600 mb-2">{summaryLoading ? 'Savings' : ( (incomeTotal - expenseTotal) >= 0 ? '🎉 Savings' : '⚠️ Savings' )}</div>
+              <div className={`text-3xl font-black ${
+                (incomeTotal - expenseTotal) >= 0
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent'
+                  : 'bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent'
+              }`}>
+                {summaryLoading ? '...' : `₹${(incomeTotal - expenseTotal).toLocaleString()}`}
               </div>
-            </div>
-            <div className="bg-white p-4 rounded shadow">
-              <div className="text-sm text-gray-500">{summaryLoading ? 'Savings' : ( (incomeTotal - expenseTotal) >= 0 ? '🎉 Savings' : '⚠️ Savings' )}</div>
-              <div className="text-2xl font-semibold text-blue-600">
-                {summaryLoading ? '...' : `${(incomeTotal - expenseTotal).toLocaleString()}`}
-              </div>
-            </div>
+            </Card>
           </div>
 
-          <div className="flex items-center justify-start gap-3 mb-2">
-            {/* <label className="text-sm">Select month:</label> */}
-            <input type="month" value={summaryMonth} onChange={(e)=>setSummaryMonth(e.target.value)} className="border rounded p-0 text-xs font-semibold" />
-            <button
-          onClick={() => navigate("/transactions")}
-          className="text-orange_peel-500 hover:text-orange_peel-600 font-semibold underline inline-block"
-        >
-           Add New Transaction →
-        </button>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-3">
+            <div className="flex items-center gap-3">
+              <input type="month" value={summaryMonth} onChange={(e)=>setSummaryMonth(e.target.value)} className="border rounded p-2 text-sm bg-transparent" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="md" onClick={() => navigate('/transactions')}>Add New Transaction →</Button>
+            </div>
           </div>
         </div>
 
         {/* Financial visualization module */}
-        <div className="mt-4 px-2">
+        <div className="mt-4 px-0">
           <FinancialTrends month={summaryMonth} />
         </div>
 
@@ -180,13 +186,8 @@ const Dashboard = () => {
         {latestAiAdvice && (
           <div className="mt-8 px-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">🤖 Latest AI Insights</h3>
-              <button
-                onClick={() => navigate("/ai-advisor")}
-                className="text-orange_peel-500 hover:text-orange_peel-600 font-semibold underline text-sm"
-              >
-                View All →
-              </button>
+              <h3 className="text-xl font-bold bp-gradient-text">🤖 Latest AI Insights</h3>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/ai-advisor')}>View All →</Button>
             </div>
             <div className="max-w-lg">
               <AiHistoryCard entry={latestAiAdvice} />
@@ -198,13 +199,8 @@ const Dashboard = () => {
         {tips.length > 0 && (
           <div className="mt-8 px-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">💡 Financial Tips</h3>
-              <button
-                onClick={() => navigate("/ai-advisor")}
-                className="text-orange_peel-500 hover:text-orange_peel-600 font-semibold underline text-sm"
-              >
-                View More →
-              </button>
+              <h3 className="text-xl font-bold bp-gradient-text">💡 Financial Tips</h3>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/ai-advisor')}>View More →</Button>
             </div>
             <TipCard tips={tips.slice(0, 3)} />
           </div>

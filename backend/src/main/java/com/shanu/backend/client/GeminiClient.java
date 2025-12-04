@@ -5,6 +5,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
@@ -29,11 +33,12 @@ public class GeminiClient {
     @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models}")
     private String apiUrl;
     
-    @Value("${gemini.model:gemini-pro}")
+    @Value("${gemini.model:gemini-1.5-pro}")
     private String model;
     
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Logger log = LoggerFactory.getLogger(GeminiClient.class);
 
     /**
      * Call Gemini API with a prompt and return raw response.
@@ -47,9 +52,10 @@ public class GeminiClient {
             throw new IllegalStateException("Gemini API key not configured. Set GEMINI_API_KEY env var.");
         }
 
-        String url = apiUrl + "/" + model + ":generateContent?key=" + apiKey;
+        // Build URL without embedding the key in the query string — use Authorization header instead.
+        String url = apiUrl.endsWith("/") ? apiUrl + model + ":generateContent" : apiUrl + "/" + model + ":generateContent";
 
-        // Build Gemini request
+        // Build Gemini request body
         Map<String, Object> request = new HashMap<>();
         Map<String, Object> contents = new HashMap<>();
         Map<String, String> part = new HashMap<>();
@@ -58,19 +64,53 @@ public class GeminiClient {
         request.put("contents", List.of(contents));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", "application/json");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + apiKey);
 
-        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(request), headers);
+        String body = objectMapper.writeValueAsString(request);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
-        try {
-            String response = restTemplate.postForObject(url, entity, String.class);
-            
-            // Extract text from Gemini response structure
-            String text = extractTextFromGeminiResponse(response);
-            return text;
-        } catch (Exception e) {
-            throw new RuntimeException("Gemini API call failed: " + e.getMessage(), e);
+        // Simple retry loop with exponential backoff + jitter to tolerate transient failures
+        final int maxAttempts = 3;
+        long backoffMillis = 500;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                log.debug("Calling Gemini (attempt {}): {}", attempt, url);
+                ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
+                int status = resp.getStatusCode().value();
+                String responseBody = resp.getBody() == null ? "" : resp.getBody();
+
+                if (status >= 200 && status < 300) {
+                    String text = extractTextFromGeminiResponse(responseBody);
+                    log.debug("Gemini response extracted length={}", text == null ? 0 : text.length());
+                    return text;
+                } else {
+                    String msg = String.format("Gemini returned non-success status %d", status);
+                    log.warn(msg + " - body: {}", responseBody);
+                    if (attempt == maxAttempts) {
+                        throw new RuntimeException(msg + ": " + responseBody);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Gemini API call failed on attempt {}: {}", attempt, e.getMessage());
+                if (attempt == maxAttempts) {
+                    throw new RuntimeException("Gemini API call failed after retries: " + e.getMessage(), e);
+                }
+            }
+
+            // backoff with jitter
+            long jitter = (long) (Math.random() * 100);
+            try {
+                Thread.sleep(backoffMillis + jitter);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted during retry backoff", ie);
+            }
+            backoffMillis *= 2;
         }
+
+        throw new RuntimeException("Gemini API call failed (unreachable code)");
     }
 
     /**

@@ -7,12 +7,12 @@ import React from 'react';
  */
 export default function QuickOptions({ options, onSelect }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {options.map((option, idx) => (
         <button
           key={idx}
           onClick={() => onSelect(option)}
-          className="px-3 py-2 bg-mint_green text-gray-900 rounded-full text-sm font-medium hover:bg-green-400 active:bg-green-500 transition-colors shadow-sm"
+          className="px-2.5 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full text-xs font-medium hover:from-blue-700 hover:to-cyan-600 active:from-blue-800 active:to-cyan-700 transition-all shadow-sm"
         >
           {option}
         </button>

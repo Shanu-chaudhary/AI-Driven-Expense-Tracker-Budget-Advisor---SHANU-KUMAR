@@ -5,15 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shanu.backend.client.GeminiClient;
 import com.shanu.backend.model.Conversation;
 import com.shanu.backend.model.Message;
+import com.shanu.backend.model.Transaction;
 import com.shanu.backend.repository.ConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * ChatService orchestrates guided chatbot conversations.
@@ -37,8 +40,11 @@ public class ChatService {
     
     @Autowired
     private GeminiClient geminiClient;
+
+    @Autowired
+    private TransactionService transactionService;
     
-    @Value("${chat.system-prompt:You are BudgetPilot, a friendly financial advisor chatbot. Guide the user through a step-by-step journey to understand their financial goals. Ask 2-4 options at a time. Always respond with valid JSON containing: {\"text\": \"Your message\", \"options\": [\"Option 1\", \"Option 2\"], \"confidence\": 75}}")
+    @Value("${chat.system-prompt:You are BudgetPilot, a friendly financial advisor chatbot. Analyze the user's financial data comprehensively. Provide insights, suggestions, and alerts. Be conversational and helpful. You can respond with or without JSON - plain text is fine too.}")
     private String systemPrompt;
     
     @Value("${chat.rate-limit.per-sec:2}")
@@ -83,8 +89,91 @@ public class ChatService {
     }
 
     /**
+     * Build a comprehensive transaction context for the user.
+     * Includes: total income, total expense, category breakdown, recent transactions, budget status.
+     */
+    private String buildTransactionContext(String userId) {
+        List<Transaction> transactions = transactionService.getTransactionsByUser(userId);
+        
+        if (transactions == null || transactions.isEmpty()) {
+            return "User has no transaction data yet.";
+        }
+        
+        StringBuilder context = new StringBuilder();
+        
+        // Calculate totals
+        double totalIncome = 0;
+        double totalExpense = 0;
+        
+        for (Transaction txn : transactions) {
+            if ("income".equalsIgnoreCase(txn.getType())) {
+                totalIncome += txn.getAmount();
+            } else if ("expense".equalsIgnoreCase(txn.getType())) {
+                totalExpense += txn.getAmount();
+            }
+        }
+        
+        double netSavings = totalIncome - totalExpense;
+        
+        // Add summary
+        context.append("FINANCIAL SUMMARY:\n");
+        context.append(String.format("- Total Income: ₹%.2f\n", totalIncome));
+        context.append(String.format("- Total Expense: ₹%.2f\n", totalExpense));
+        context.append(String.format("- Net Savings: ₹%.2f\n", netSavings));
+        context.append(String.format("- Savings Rate: %.1f%%\n", totalIncome > 0 ? (netSavings / totalIncome * 100) : 0));
+        
+        // Category breakdown for expenses
+        Map<String, Double> categoryTotals = new HashMap<>();
+        for (Transaction txn : transactions) {
+            if ("expense".equalsIgnoreCase(txn.getType())) {
+                String category = txn.getCategory() != null ? txn.getCategory() : "Uncategorized";
+                categoryTotals.put(category, categoryTotals.getOrDefault(category, 0.0) + txn.getAmount());
+            }
+        }
+        
+        // Sort by amount (descending)
+        List<Map.Entry<String, Double>> sortedCategories = categoryTotals.entrySet().stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .collect(Collectors.toList());
+        
+        if (!sortedCategories.isEmpty()) {
+            context.append("\nEXPENSE BY CATEGORY (Top):\n");
+            int count = 0;
+            for (Map.Entry<String, Double> entry : sortedCategories) {
+                if (count >= 5) break; // Top 5 categories
+                double percentage = (entry.getValue() / totalExpense) * 100;
+                context.append(String.format("- %s: ₹%.2f (%.1f%%)\n", entry.getKey(), entry.getValue(), percentage));
+                count++;
+            }
+        }
+        
+        // Recent transactions (last 5)
+        List<Transaction> recentTxns = transactions.stream()
+                .sorted((a, b) -> {
+                    java.util.Date dateA = a.getDate() != null ? a.getDate() : new java.util.Date(0);
+                    java.util.Date dateB = b.getDate() != null ? b.getDate() : new java.util.Date(0);
+                return dateB.compareTo(dateA);
+            })
+            .limit(5)
+            .collect(Collectors.toList());
+        
+        if (!recentTxns.isEmpty()) {
+            context.append("\nRECENT TRANSACTIONS:\n");
+            for (Transaction txn : recentTxns) {
+                String type = txn.getType() != null ? txn.getType().toUpperCase() : "UNKNOWN";
+                String category = txn.getCategory() != null ? txn.getCategory() : "Uncategorized";
+                String description = txn.getDescription() != null ? txn.getDescription() : "(no description)";
+                context.append(String.format("- [%s] %s: ₹%.2f - %s\n", type, category, txn.getAmount(), description));
+            }
+        }
+        
+        context.append("\n");
+        return context.toString();
+    }
+
+    /**
      * Handle a user message in an existing conversation.
-     * Validates ownership, appends message, calls Gemini, parses response, saves.
+     * Validates ownership, appends message, calls Gemini with transaction context, parses response, saves.
      */
     public Map<String, Object> handleUserMessage(String conversationId, String userId, String text, String option) throws Exception {
         checkRateLimit(userId);
@@ -102,8 +191,8 @@ public class ChatService {
             throw new SecurityException("Unauthorized: conversation does not belong to user");
         }
         
-        // Append user message (prefer option, fallback to text)
-        String userText = option != null ? "Selected: " + option : (text != null ? text : "");
+        // Append user message (prefer text, fallback to option)
+        String userText = text != null && !text.isEmpty() ? text : (option != null ? option : "");
         if (userText.isEmpty()) {
             throw new IllegalArgumentException("Either 'text' or 'option' must be provided");
         }
@@ -111,44 +200,60 @@ public class ChatService {
         Message userMessage = new Message("user", userText);
         conversation.getMessages().add(userMessage);
         
-        // Build prompt from conversation history
+        // Build prompt with transaction context
         StringBuilder prompt = new StringBuilder(systemPrompt);
-        prompt.append("\n\n--- Conversation History ---\n");
+        prompt.append("\n\n=== USER'S FINANCIAL DATA ===\n");
         
-        // Include last 10 messages for context
-        int startIdx = Math.max(0, conversation.getMessages().size() - 10);
+        // Get and include transaction context
+        String transactionContext = buildTransactionContext(userId);
+        prompt.append(transactionContext);
+        
+        prompt.append("\n=== CONVERSATION HISTORY ===\n");
+        
+        // Include last 15 messages for context
+        int startIdx = Math.max(0, conversation.getMessages().size() - 15);
         for (int i = startIdx; i < conversation.getMessages().size(); i++) {
             Message msg = conversation.getMessages().get(i);
             prompt.append(msg.getRole().toUpperCase()).append(": ").append(msg.getText()).append("\n");
         }
         
-        // Add meta state if relevant
-        if (conversation.getMeta() != null && !conversation.getMeta().isEmpty()) {
-            prompt.append("\n--- Current State ---\n");
-            conversation.getMeta().forEach((key, value) -> 
-                prompt.append(key).append(": ").append(value).append("\n")
-            );
+        // Call Gemini with full context
+        Map<String, Object> assistantData;
+        String geminiResponse;
+        try {
+            geminiResponse = geminiClient.callGemini(prompt.toString());
+            // Parse response (both JSON and plain text supported)
+            assistantData = parseGeminiResponse(geminiResponse);
+        } catch (Exception e) {
+            // On failure, prepare a helpful assistant message containing the error
+            String errText = "Error contacting Gemini: " + e.getMessage();
+            Message errorAssistant = new Message("assistant", "❌ " + errText + "\n\nPlease try again later.");
+            Map<String, Object> meta = new HashMap<>();
+            meta.put("source", "gemini");
+            meta.put("error", e.getMessage());
+            errorAssistant.setMetadata(meta);
+            conversation.getMessages().add(errorAssistant);
+            conversation.setUpdatedAt(LocalDateTime.now());
+            if (conversation.getMeta() == null) conversation.setMeta(new HashMap<>());
+            conversation.getMeta().put("last_error", e.getMessage());
+            conversationRepository.save(conversation);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("assistantMessage", errorAssistant);
+            response.put("conversation", conversation);
+            return response;
         }
-        
-        // Call Gemini
-        String geminiResponse = geminiClient.callGemini(prompt.toString());
-        
-        // Parse response
-        Map<String, Object> assistantData = parseGeminiResponse(geminiResponse);
-        
+
         Message assistantMessage = new Message("assistant", 
-            (String) assistantData.getOrDefault("text", "I understand. How can I assist further?"));
-        
-        if (assistantData.containsKey("options")) {
+            (String) (assistantData != null ? assistantData.getOrDefault("text", "I understand. How can I assist further?") : "I understand. How can I assist further?"));
+
+        if (assistantData != null && assistantData.containsKey("options")) {
             @SuppressWarnings("unchecked")
             List<String> options = (List<String>) assistantData.get("options");
             assistantMessage.setOptions(options);
         }
-        
+
         Map<String, Object> metadata = new HashMap<>();
-        if (assistantData.containsKey("confidence")) {
-            metadata.put("confidence", assistantData.get("confidence"));
-        }
         metadata.put("source", "gemini");
         assistantMessage.setMetadata(metadata);
         
@@ -159,7 +264,7 @@ public class ChatService {
         if (conversation.getMeta() == null) {
             conversation.setMeta(new HashMap<>());
         }
-        conversation.getMeta().put("last_step", assistantData.getOrDefault("step", "processing"));
+        conversation.getMeta().put("last_updated", LocalDateTime.now().toString());
         
         conversationRepository.save(conversation);
         

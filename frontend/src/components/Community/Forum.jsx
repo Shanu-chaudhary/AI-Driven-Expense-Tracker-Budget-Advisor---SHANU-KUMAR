@@ -3,6 +3,8 @@ import Post from './Post';
 import axios from '../../api/axios';
 import { ToastContext } from '../../context/ToastContext';
 import { AuthContext } from '../../context/AuthContext';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const STORAGE_KEY = 'forum_posts_v1';
 
@@ -116,20 +118,20 @@ const Forum = () => {
 
   return (
     <div>
-      <div className="bg-white rounded shadow p-4 mb-4">
-        <h4 className="font-semibold mb-2">Financial Tips Forum</h4>
+      <Card className="mb-4 p-4">
+        <h4 className="font-semibold mb-2 bp-gradient-text">Financial Tips Forum</h4>
         <div className="mb-2">
-          <input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Post title" className="w-full border rounded p-2 mb-2" />
-          <textarea value={body} onChange={(e)=>setBody(e.target.value)} placeholder="Share a tip or question..." className="w-full border rounded p-2 mb-2" rows={3} />
+          <input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Post title" className="w-full border border-blue-200 rounded p-2 mb-2 bg-white text-slate-900" />
+          <textarea value={body} onChange={(e)=>setBody(e.target.value)} placeholder="Share a tip or question..." className="w-full border border-blue-200 rounded p-2 mb-2 bg-white text-slate-900" rows={3} />
           <div className="flex justify-end">
-            <button onClick={createPost} className="bg-orange_peel-500 hover:bg-orange_peel-400 text-white py-2 px-3 rounded">Post</button>
+            <Button onClick={createPost}>Post</Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       <div>
         {posts.length === 0 ? (
-          <div className="text-sm text-gray-500">No posts yet. Start the conversation about money-saving tips!</div>
+          <div className="text-sm text-slate-600">No posts yet. Start the conversation about money-saving tips!</div>
         ) : (
           posts.map(p => {
             const isOwn = (p.author === 'You') || (user && (p.authorId === user.id || p.authorName === user.name || p.authorName === user.email));

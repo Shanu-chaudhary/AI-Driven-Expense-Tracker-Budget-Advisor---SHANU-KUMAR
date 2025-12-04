@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import DashboardLayout from '../components/Layout/DashboardLayout'
 import axios from '../api/axios'
+import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
 
 // Simple utilities
 const STORAGE_BUDGETS = 'budgets_v1'
@@ -131,52 +133,50 @@ export default function BudgetPage(){
   return (
     <DashboardLayout>
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-light_sea_green-600 mb-4">Budget & Savings</h2>
+        <h2 className="text-2xl font-bold bp-gradient-text mb-4">Budget & Savings</h2>
 
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+        {error && <Card className="mb-4 p-3">{error}</Card>}
 
         <div className="mb-6 flex items-center gap-3">
-          <label className="text-sm">Month:</label>
-          <input type="month" value={month} onChange={(e)=>setMonth(e.target.value)} className="border p-2 rounded" />
-          <button onClick={fetchData} className="ml-4 px-3 py-2 bg-light_sea_green-500 text-white rounded">Refresh</button>
+          <label className="text-sm text-slate-600">Month:</label>
+          <input type="month" value={month} onChange={(e)=>setMonth(e.target.value)} className="border border-blue-200 p-2 rounded bg-white text-slate-900" />
+          <Button className="ml-4" onClick={fetchData}>Refresh</Button>
         </div>
 
-        
-
         {/* Per-category budget setter */}
-        <div className="mb-6 bg-white border rounded p-4">
-          <h4 className="font-medium mb-2">Set budget for a category</h4>
-          <div className="flex items-center gap-3">
-            <label className="text-sm">Category:</label>
-            <select value={selectedCategory} onChange={(e)=>setSelectedCategory(e.target.value)} className="border p-2 rounded w-64">
+        <Card className="mb-6 p-4">
+          <h4 className="font-medium mb-2 text-slate-900">Set budget for a category</h4>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-sm text-slate-600">Category:</label>
+            <select value={selectedCategory} onChange={(e)=>setSelectedCategory(e.target.value)} className="border border-blue-200 p-2 rounded w-64 bg-white text-slate-900">
               <option value="">-- pick category --</option>
               {mergedCategories.map(c => (
                 <option key={c._id} value={c._id}>{c.name} {c.type ? `(${c.type})` : ''}</option>
               ))}
             </select>
 
-            <label className="text-sm">Budget:</label>
-            <input type="number" min="0" value={selectedCategoryBudget} onChange={(e)=>setSelectedCategoryBudget(e.target.value)} className="border p-2 rounded w-32" />
+            <label className="text-sm text-slate-600">Budget:</label>
+            <input type="number" min="0" value={selectedCategoryBudget} onChange={(e)=>setSelectedCategoryBudget(e.target.value)} className="border border-blue-200 p-2 rounded w-32 bg-white text-slate-900" />
 
-            <button onClick={() => {
+            <Button onClick={() => {
               if (!selectedCategory) return alert('Select a category first')
               const v = Number(selectedCategoryBudget || 0)
               if (isNaN(v) || v < 0) return alert('Enter valid non-negative number')
               handleBudgetChange(selectedCategory, v)
               alert('Budget saved for category')
-            }} className="px-3 py-2 bg-light_sea_green-500 text-white rounded">Save</button>
+            }}>Save</Button>
           </div>
           {selectedCategory && (
-            <div className="text-sm text-gray-600 mt-2">Spent this month: {(spent[selectedCategory]||0).toLocaleString()}</div>
+            <div className="text-sm text-slate-600 mt-2">Spent this month: {(spent[selectedCategory]||0).toLocaleString()}</div>
           )}
-        </div>
+        </Card>
 
         <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white border rounded p-4">
-            <h3 className="font-semibold mb-3">Category Budgets</h3>
-            {loading ? <p>Loading...</p> : (
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3 text-slate-900">Category Budgets</h3>
+            {loading ? <p className="text-slate-600">Loading...</p> : (
               <div className="space-y-3">
-                {mergedCategories.length === 0 && <p className="text-sm text-gray-500">No expense categories yet.</p>}
+                {mergedCategories.length === 0 && <p className="text-sm text-slate-600">No expense categories yet.</p>}
                 {mergedCategories.map(cat => {
                   // Only show expense categories here
                   if (cat.type !== 'expense') return null
@@ -186,29 +186,29 @@ export default function BudgetPage(){
                   const remaining = (b - s)
                   const pct = b > 0 ? Math.max(0, Math.min(100, Math.round((s/b)*100))) : 0
                   return (
-                    <div key={id} className="flex items-center justify-between gap-3 border-b pb-2">
+                    <div key={id} className="flex items-center justify-between gap-3 border-b border-blue-100 pb-2">
                       <div className="flex-1">
-                        <div className="font-medium">{cat.name}</div>
-                        <div className="text-xs text-gray-500">Spent: {s.toLocaleString()} • Budget: {b.toLocaleString()}</div>
-                        <div className="w-full bg-gray-100 rounded h-2 mt-2 overflow-hidden">
-                          <div style={{width: `${pct}%`}} className={`h-2 ${pct>80 ? 'bg-red-500' : 'bg-light_sea_green-500'}`}></div>
+                        <div className="font-medium text-slate-900">{cat.name}</div>
+                        <div className="text-xs text-slate-600">Spent: {s.toLocaleString()} • Budget: {b.toLocaleString()}</div>
+                        <div className="w-full bg-blue-100 rounded h-2 mt-2 overflow-hidden">
+                          <div style={{width: `${pct}%`}} className={`h-2 ${pct>80 ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                         </div>
                       </div>
                       <div className="w-40">
-                        <input type="number" min="0" value={b} onChange={(e)=>handleBudgetChange(id, e.target.value)} className="border p-2 rounded w-full" />
-                        <div className="text-xs text-gray-600 mt-1">Remaining: {remaining.toLocaleString()}</div>
+                        <input type="number" min="0" value={b} onChange={(e)=>handleBudgetChange(id, e.target.value)} className="border border-blue-200 p-2 rounded w-full bg-white text-slate-900" />
+                        <div className="text-xs text-slate-600 mt-1">Remaining: {remaining.toLocaleString()}</div>
                       </div>
                     </div>
                   )
                 })}
               </div>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-white border rounded p-4">
-            <h3 className="font-semibold mb-3">Savings Goals</h3>
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3 text-slate-900">Savings Goals</h3>
             <SavingsGoals goals={goals} onAdd={handleAddGoal} onUpdate={handleUpdateGoal} onDelete={handleDeleteGoal} />
-          </div>
+          </Card>
         </div>
 
       </div>
@@ -231,43 +231,43 @@ function SavingsGoals({ goals, onAdd, onUpdate, onDelete }){
   return (
     <div>
       <div className="space-y-2 mb-4">
-        <input placeholder="Goal name" className="w-full border p-2 rounded" value={name} onChange={(e)=>setName(e.target.value)} />
+        <input placeholder="Goal name" className="w-full border border-blue-200 p-2 rounded bg-white text-slate-900" value={name} onChange={(e)=>setName(e.target.value)} />
         <div className="flex gap-2">
-          <input placeholder="Target amount" type="number" className="border p-2 rounded w-1/2" value={target} onChange={(e)=>setTarget(e.target.value)} />
-          <input placeholder="Current saved" type="number" className="border p-2 rounded w-1/2" value={saved} onChange={(e)=>setSaved(e.target.value)} />
+          <input placeholder="Target amount" type="number" className="border border-blue-200 p-2 rounded w-1/2 bg-white text-slate-900" value={target} onChange={(e)=>setTarget(e.target.value)} />
+          <input placeholder="Current saved" type="number" className="border border-blue-200 p-2 rounded w-1/2 bg-white text-slate-900" value={saved} onChange={(e)=>setSaved(e.target.value)} />
         </div>
         <div className="flex justify-end">
-          <button onClick={add} className="px-3 py-2 bg-orange_peel-500 text-white rounded">Add Goal</button>
+          <Button onClick={add}>Add Goal</Button>
         </div>
       </div>
 
       <div className="space-y-3">
-        {goals.length === 0 && <p className="text-sm text-gray-500">No savings goals. Add one above.</p>}
+        {goals.length === 0 && <p className="text-sm text-slate-600">No savings goals. Add one above.</p>}
         {goals.map(g => {
           const pct = g.target > 0 ? Math.min(100, Math.round((g.saved/g.target)*100)) : 0
           return (
-            <div key={g.id} className="border p-2 rounded">
+            <Card key={g.id} className="p-2">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="font-medium">{g.name}</div>
-                  <div className="text-xs text-gray-500">Saved: {Number(g.saved).toLocaleString()} / {Number(g.target).toLocaleString()}</div>
+                  <div className="font-medium text-slate-900">{g.name}</div>
+                  <div className="text-xs text-slate-600">Saved: {Number(g.saved).toLocaleString()} / {Number(g.target).toLocaleString()}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold">{pct}%</div>
+                  <div className="text-sm font-semibold text-slate-900">{pct}%</div>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 rounded h-2 mt-2 overflow-hidden">
-                <div style={{width: `${pct}%`}} className={`h-2 ${pct>80 ? 'bg-light_sea_green-500' : 'bg-light_sea_green-500'}`}></div>
+              <div className="w-full bg-blue-100 rounded h-2 mt-2 overflow-hidden">
+                <div style={{width: `${pct}%`}} className={`h-2 bg-gradient-to-r from-blue-500 to-cyan-500`}></div>
               </div>
 
               <div className="mt-2 flex gap-2">
-                <button onClick={() => {
+                <Button onClick={() => {
                   const val = Number(prompt('Update saved amount', String(g.saved || 0)) || 0)
                   if(!isNaN(val)) onUpdate({ ...g, saved: val })
-                }} className="px-2 py-1 border rounded">Update</button>
-                <button onClick={() => { if(window.confirm('Delete goal?')) onDelete(g.id) }} className="px-2 py-1 border rounded text-red-500">Delete</button>
+                }}>Update</Button>
+                <Button variant="danger" onClick={() => { if(window.confirm('Delete goal?')) onDelete(g.id) }}>Delete</Button>
               </div>
-            </div>
+            </Card>
           )
         })}
       </div>

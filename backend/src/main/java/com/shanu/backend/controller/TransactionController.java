@@ -46,7 +46,33 @@ public class TransactionController {
     @GetMapping("/list")
     public ResponseEntity<?> getUserTransactions(@RequestHeader("Authorization") String token) {
         try {
-            User user = authService.getUserFromToken(token);
+            if (token == null || token.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authorization header required"));
+            }
+            
+            // AuthService.getUserFromToken handles both "Bearer <token>" and plain token
+            String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+            User user = authService.getUserFromToken(cleanToken);
+            List<Transaction> txns = transactionService.getTransactionsByUser(user.getId());
+            return ResponseEntity.ok(txns);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getTransactions(@RequestHeader("Authorization") String token) {
+        try {
+            if (token == null || token.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authorization header required"));
+            }
+            
+            // AuthService.getUserFromToken handles both "Bearer <token>" and plain token
+            String cleanToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+            User user = authService.getUserFromToken(cleanToken);
             List<Transaction> txns = transactionService.getTransactionsByUser(user.getId());
             return ResponseEntity.ok(txns);
         } catch (Exception e) {

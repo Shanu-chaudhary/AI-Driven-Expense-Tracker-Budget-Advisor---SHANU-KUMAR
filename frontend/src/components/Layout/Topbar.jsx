@@ -30,17 +30,16 @@ const Topbar = () => {
   }, []);
 
   return (
-    <div className="h-16 bg-mint_green-500 shadow-md flex items-center justify-between px-6">
-      {/* <h1 className="text-lg font-semibold text-light_sea_green-200">
-        Welcome, {user?.name || "User"}
-      </h1>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-orange_peel-500 flex items-center justify-center text-white font-bold">
-          {user?.name ? user.name[0].toUpperCase() : "U"}
-        </div>
-      </div> */}
-      <ProfileCard profile={profile} />
-    </div>
+    <header className="h-16 flex items-center justify-between px-6 border-b border-blue-100 bg-white">
+      <div className="flex items-center gap-4">
+        <h2 className="text-lg font-semibold text-slate-900">BudgetPilot</h2>
+        <span className="text-slate-600 text-sm">Smart budgeting & AI guidance</span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <ProfileCard profile={profile} />
+      </div>
+    </header>
   );
 };
 

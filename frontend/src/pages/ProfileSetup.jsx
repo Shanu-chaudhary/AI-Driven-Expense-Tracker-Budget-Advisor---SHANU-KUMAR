@@ -127,8 +127,8 @@ export default function ProfileSetup() {
               </button>
             </div>
           ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-2">
-              <span className="text-gray-400">No Image</span>
+            <div className="w-32 h-32 rounded-full bg-slate-200 flex items-center justify-center mb-2">
+              <span className="text-slate-500">No Image</span>
             </div>
           )}
           <input
@@ -139,7 +139,7 @@ export default function ProfileSetup() {
             disabled={imageLoading}
           />
           {imageLoading && (
-            <p className="text-sm text-gray-500 mt-1">Uploading image...</p>
+            <p className="text-sm text-slate-600 mt-1">Uploading image...</p>
           )}
         </div>
         <input name="fullName" placeholder="Full Name" onChange={handleChange} required className="w-full p-2 border rounded" />
@@ -160,7 +160,7 @@ export default function ProfileSetup() {
           {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
         </select>
 
-        <input name="currency" value={profile.currency || ""} readOnly placeholder="Currency" className="w-full p-2 border rounded bg-gray-100" />
+        <input name="currency" value={profile.currency || ""} readOnly placeholder="Currency" className="w-full p-2 border rounded bg-slate-100" />
         <input name="language" placeholder="Preferred Language" onChange={handleChange} required className="w-full p-2 border rounded" />
         <input name="phoneNumber" placeholder="Phone Number (optional)" onChange={handleChange} type="tel" className="w-full p-2 border rounded" />
 

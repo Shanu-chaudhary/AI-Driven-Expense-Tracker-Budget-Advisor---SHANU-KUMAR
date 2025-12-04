@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -33,23 +35,24 @@ export default function VerifyEmail() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="flex items-center justify-center h-screen bg-mint_green-100">
-      <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center border border-light_sea_green-300">
-        <h2 className="text-2xl font-semibold text-light_sea_green-500 mb-4">
+    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
+      <Card className="p-8 max-w-md text-center">
+        <h2 className="text-2xl font-semibold bp-gradient-text mb-4">
           {loading ? "Verifying..." : "Email Verification"}
         </h2>
-        <p className={`text-lg ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+        <p className={`text-lg ${message.includes("success") ? "text-green-500" : "text-red-500"}`}>
           {message}
         </p>
         {!loading && (
-          <button
+          <Button
             onClick={() => navigate("/login")}
-            className="mt-6 bg-light_sea_green-500 text-white px-6 py-2 rounded-lg hover:bg-light_sea_green-400 transition"
+            className="mt-6"
+            variant="primary"
           >
             Go to Login
-          </button>
+          </Button>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
