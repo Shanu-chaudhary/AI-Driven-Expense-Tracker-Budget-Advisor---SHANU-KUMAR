@@ -10,6 +10,7 @@
 /backend/src/main/resources/application-secret.properties
 /backend/application-secret.properties
 /backend/src/main/resources/application-secret.properties
+/backend/src/main/resources/application.properties
 
 # Environment files
 .env
