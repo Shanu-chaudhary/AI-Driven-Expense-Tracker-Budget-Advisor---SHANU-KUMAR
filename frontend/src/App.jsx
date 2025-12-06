@@ -17,6 +17,7 @@ import ExportPage from "./pages/ExportPage";
 import CommunityPage from "./pages/CommunityPage";
 import AiAdvisor from "./pages/AiAdvisor";
 import AiHistory from "./pages/AiHistory";
+import Insights from "./pages/Insights";
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -97,6 +98,14 @@ function App() {
           element={
             <ProfileRequiredRoute>
               <AiHistory />
+            </ProfileRequiredRoute>
+          }
+        />
+        <Route
+          path="/insights"
+          element={
+            <ProfileRequiredRoute>
+              <Insights />
             </ProfileRequiredRoute>
           }
         />

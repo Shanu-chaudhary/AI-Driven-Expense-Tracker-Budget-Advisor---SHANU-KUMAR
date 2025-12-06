@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
 import axios from '../../api/axios';
@@ -129,17 +128,12 @@ Here are some things I can help with:`,
       }
 
       // Real mode - start conversation via API
-      const response = await axios.post(
-        '/api/chat/start',
-        { message: 'Start conversation' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const conversationData = response.data.conversation || {};
-      setConversationId(conversationData.id);
+      const response = await axios.post('/chat/start', { message: 'Start conversation' });
+      const newConvId = response.data.conversationId || response.data.conversation?.id;
+      if (newConvId) setConversationId(newConvId);
 
       // Build welcome message with initial suggestions
-      const assistantMsg = response.data.assistantMessage || {};
+      const assistantMsg = response.data.assistantMessage || response.data.assistantMessage || {};
       const welcomeMsg = {
         role: 'assistant',
         text: assistantMsg.text || `👋 Welcome to BudgetPilot! I'm your financial advisor. How can I help you today?
@@ -155,7 +149,7 @@ Here are some things I can help with:`,
 
       setMessages([welcomeMsg]);
     } catch (error) {
-      console.error('Error initializing chat:', error.message);
+      console.error('Error initializing chat:', error, error?.response?.data || 'no response body');
       // Fallback to welcome message
       const welcomeMsg = {
         role: 'assistant',
@@ -232,13 +226,11 @@ What would you like to explore?`,
       if (!conversationId) {
         // Start new conversation
         const startResponse = await axios.post(
-          '/api/chat/start',
-          { message: textToSend },
-          { headers: { Authorization: `Bearer ${token}` } }
+          '/chat/start',
+          { message: textToSend }
         );
-
-        const newConvId = startResponse.data.conversation?.id;
-        setConversationId(newConvId);
+        const newConvId = startResponse.data.conversationId || startResponse.data.conversation?.id;
+        if (newConvId) setConversationId(newConvId);
 
         const assistantMsg = {
           role: 'assistant',
@@ -250,12 +242,11 @@ What would you like to explore?`,
       } else {
         // Continue existing conversation
         const response = await axios.post(
-          `/api/chat/${conversationId}/message`,
+          `/chat/${conversationId}/message`,
           { 
             text: textToSend,
             option: null
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
+          }
         );
 
         const assistantMsg = {
@@ -267,7 +258,7 @@ What would you like to explore?`,
         setMessages((prev) => [...prev, assistantMsg]);
       }
     } catch (error) {
-      console.error('Error sending message:', error.message);
+      console.error('Error sending message:', error, error?.response?.data || 'no response body');
       // If backend returned an error message, surface it in the chat for debugging
       const backendError = error?.response?.data?.error || error?.response?.data || error.message;
       showToast('Error sending message: ' + (typeof backendError === 'string' ? backendError : 'See chat.'), 'info');

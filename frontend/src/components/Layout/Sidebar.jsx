@@ -16,8 +16,9 @@ const Sidebar = () => {
     { label: "Transactions", icon: FiList, path: "/transactions" },
     { label: "Budget", icon: FiTrendingUp, path: "/budget" },
     { label: "Export", icon: FiDownload, path: "/export" },
-    { label: "AI Advisor", icon: "🤖", path: "/ai-advisor" },
-    { label: "AI History", icon: FiClock, path: "/ai-history" },
+    // { label: "AI Advisor", icon: "🤖", path: "/ai-advisor" },
+    { label: "Insights", icon: FiTrendingUp, path: "/insights" },
+    // { label: "AI History", icon: FiClock, path: "/ai-history" },
     { label: "Community", icon: FiMessageSquare, path: "/community" },
   ];
 

@@ -41,13 +41,30 @@ function RegisterForm() {
     }
 
     try {
-      await axios.post("/auth/register", formData);
+      const registerRes = await axios.post("/auth/register", formData);
+      console.log("Registration response:", registerRes.data);
+      
+      // Show success message and redirect to verify email page
+      if (registerRes.data?.emailVerified === false) {
+        setError(""); // Clear any errors
+        // Redirect to verify email page
+        navigate("/verify-email", { state: { email: registerRes.data.email } });
+        return;
+      }
+      
+      // If somehow email is already verified, try to login
       const loginRes = await axios.post("/auth/login", { email: formData.email, password: formData.password });
+      console.log("Login response:", loginRes.data);
+      
       if (!loginRes.data?.token) throw new Error("Login failed after registration");
       await login(loginRes.data.token, loginRes.data.user);
       navigate("/setup-profile");
     } catch (err) {
-      console.error("Registration error:", err);
+      console.error("Registration error details:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
       setError(err.response?.data?.message || err.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);

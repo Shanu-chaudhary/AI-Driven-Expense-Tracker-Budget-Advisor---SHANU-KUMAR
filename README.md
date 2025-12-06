@@ -18,6 +18,32 @@ BudgetPilot is an end-to-end personal finance assistant that helps users track t
 git config core.hooksPath .githooks
 ```
 
+# Debug/test Gemini endpoint (ADC vs API key)
+
+## Using Application Default Credentials (ADC)
+
+```bash
+curl -X POST http://localhost:8080/api/chat/debug/gemini \
+	-H "Content-Type: application/json" \
+	-d '{"prompt":"Diagnostic ping"}'
+```
+
+## Using API Key
+
+```bash
+curl -X POST http://localhost:8080/api/chat/debug/gemini \
+	-H "Content-Type: application/json" \
+	-H "x-api-key: <YOUR_GEMINI_API_KEY>" \
+	-d '{"prompt":"Diagnostic ping"}'
+```
+
+# Example test comment for endpoint
+
+// POST /api/chat/debug/gemini
+// Body: { "prompt": "Diagnostic ping" }
+// - Uses ADC if no key, or API key if provided in header or config
+// - Returns Gemini raw response for debugging auth/method
+
 See `backend/README.md` for backend-specific instructions and sensitive-file examples.
 
 ---

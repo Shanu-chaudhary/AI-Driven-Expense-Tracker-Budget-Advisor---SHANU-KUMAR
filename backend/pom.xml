@@ -69,6 +69,12 @@
     <artifactId>google-genai</artifactId>
     <version>1.0.0</version>
         </dependency>
+		<!-- Google Auth library for obtaining OAuth2 access tokens (service accounts / ADC) -->
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<version>1.24.0</version>
+		</dependency>
 
 		<!-- JWT -->
 <dependency>

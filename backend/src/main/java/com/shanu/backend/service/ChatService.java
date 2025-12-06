@@ -11,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * ChatService orchestrates guided chatbot conversations.
@@ -44,7 +46,24 @@ public class ChatService {
     @Autowired
     private TransactionService transactionService;
     
-    @Value("${chat.system-prompt:You are BudgetPilot, a friendly financial advisor chatbot. Analyze the user's financial data comprehensively. Provide insights, suggestions, and alerts. Be conversational and helpful. You can respond with or without JSON - plain text is fine too.}")
+    @Value("${chat.system-prompt:You are BudgetPilot, a financial advisor. When given a user's financial context, you MUST return a JSON object inside a code block labeled ```json with this exact schema:\r\n" + //
+                "\r\n" + //
+                "{\r\n" + //
+                "  \"summary\": \"short textual summary (1-2 sentences)\",\r\n" + //
+                "  \"top_expense_categories\": [\r\n" + //
+                "    {\"category\": \"Food & Dining\", \"amount\": 2450.00, \"percent_of_expense\": 32.5},\r\n" + //
+                "    ...\r\n" + //
+                "  ],\r\n" + //
+                "  \"budget_suggestions\": [\r\n" + //
+                "    {\"category\":\"Shopping\",\"current\":3220.0,\"suggested\":2500.0,\"monthly_savings\":720.0, \"reason\":\"...\"},\r\n" + //
+                "    ...\r\n" + //
+                "  ],\r\n" + //
+                "  \"actionable_steps\": [\"Open savings account with X\", \"Set category budget for Y\"],\r\n" + //
+                "  \"confidence\": 0-100\r\n" + //
+                "}\r\n" + //
+                "\r\n" + //
+                "If transaction data is missing, return JSON with \"summary\" explaining no data and empty arrays for other fields. Do not include any other text except a single code-fenced JSON block.\r\n" + //
+                "}")
     private String systemPrompt;
     
     @Value("${chat.rate-limit.per-sec:2}")
@@ -52,6 +71,7 @@ public class ChatService {
     
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ConcurrentHashMap<String, Long> userRequestTimestamps = new ConcurrentHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     /**
      * Start a new conversation for a user.
@@ -203,11 +223,33 @@ public class ChatService {
         // Build prompt with transaction context
         StringBuilder prompt = new StringBuilder(systemPrompt);
         prompt.append("\n\n=== USER'S FINANCIAL DATA ===\n");
-        
         // Get and include transaction context
         String transactionContext = buildTransactionContext(userId);
         prompt.append(transactionContext);
-        
+
+        // === INSTRUCTION BLOCK FOR ASSISTANT ===
+        prompt.append("\n=== INSTRUCTIONS FOR ASSISTANT ===\n");
+        prompt.append(
+            "You are BudgetPilot, an AI financial advisor. You MUST analyze the user's financial data above and return a structured JSON response ONLY.\n" +
+            "Your answer MUST be inside a ```json code block and follow this schema exactly:\n\n" +
+            "{\n" +
+            "  \"summary\": \"1–2 sentence overview of the user's financial situation\",\n" +
+            "  \"top_expense_categories\": [\n" +
+            "    {\"category\": \"string\", \"amount\": number, \"percent_of_expense\": number}\n" +
+            "  ],\n" +
+            "  \"budget_suggestions\": [\n" +
+            "    {\"category\": \"string\", \"current\": number, \"suggested\": number, \"monthly_savings\": number, \"reason\": \"string\"}\n" +
+            "  ],\n" +
+            "  \"actionable_steps\": [\"string\", \"string\", \"string\"],\n" +
+            "  \"confidence\": number\n" +
+            "}\n\n" +
+            "Rules:\n" +
+            "1. Only output a JSON object inside ```json … ```.\n" +
+            "2. Always tailor suggestions based on REAL transaction data provided above.\n" +
+            "3. If data is missing, return empty arrays but still follow the schema.\n" +
+            "4. Do NOT include any user secrets, tokens, or PII in your response.\n" +
+            "5. If you cannot answer, return a valid JSON object with empty arrays and a helpful summary.\n"
+        );
         prompt.append("\n=== CONVERSATION HISTORY ===\n");
         
         // Include last 15 messages for context
@@ -221,7 +263,10 @@ public class ChatService {
         Map<String, Object> assistantData;
         String geminiResponse;
         try {
-            geminiResponse = geminiClient.callGemini(prompt.toString());
+            // DEBUG: log prompt summary (no secrets)
+            String promptStr = prompt.toString();
+            log.debug("[ChatService] Gemini prompt length={}, first1kChars=\"{}\"", promptStr.length(), promptStr.substring(0, Math.min(1000, promptStr.length())));
+            geminiResponse = geminiClient.callGemini(promptStr);
             // Parse response (both JSON and plain text supported)
             assistantData = parseGeminiResponse(geminiResponse);
         } catch (Exception e) {
@@ -307,48 +352,88 @@ public class ChatService {
      */
     private Map<String, Object> parseGeminiResponse(String response) {
         Map<String, Object> result = new HashMap<>();
-        
         // Try to extract JSON from code-fenced block (```json ... ```)
-        Pattern jsonBlockPattern = Pattern.compile("```json\\s*([\\s\\S]*?)```");
+        Pattern jsonBlockPattern = Pattern.compile("```json\\s*([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
         Matcher matcher = jsonBlockPattern.matcher(response);
-        
-        String jsonToParse = response;
-        if (matcher.find()) {
-            jsonToParse = matcher.group(1).trim();
+        List<String> jsonCandidates = new ArrayList<>();
+        while (matcher.find()) {
+            String block = matcher.group(1).trim();
+            if (!block.isEmpty()) jsonCandidates.add(block);
         }
-        
-        try {
-            JsonNode node = objectMapper.readTree(jsonToParse);
-            
-            // Extract text
-            if (node.has("text")) {
-                result.put("text", node.get("text").asText());
+        // If no code-fenced JSON, try to find raw JSON object in text
+        if (jsonCandidates.isEmpty()) {
+            Pattern rawJsonPattern = Pattern.compile("\\{[\\s\\S]*\\}");
+            Matcher rawMatcher = rawJsonPattern.matcher(response);
+            while (rawMatcher.find()) {
+                String block = rawMatcher.group().trim();
+                if (!block.isEmpty()) jsonCandidates.add(block);
             }
-            
-            // Extract options if present
-            if (node.has("options") && node.get("options").isArray()) {
-                List<String> options = new ArrayList<>();
-                node.get("options").forEach(opt -> options.add(opt.asText()));
-                result.put("options", options);
-            }
-            
-            // Extract confidence if present
-            if (node.has("confidence")) {
-                result.put("confidence", node.get("confidence").asInt());
-            }
-            
-            // Extract step if present
-            if (node.has("step")) {
-                result.put("step", node.get("step").asText());
-            }
-            
-            return result;
-        } catch (Exception e) {
-            // Fallback: return plain text response
-            result.put("text", response);
-            result.put("confidence", 50);
-            return result;
         }
+        // Try parsing each candidate
+        for (String json : jsonCandidates) {
+            try {
+                JsonNode node = objectMapper.readTree(json);
+                // Always extract all fields for schema
+                // if (node.has("summary")) result.put("summary", node.get("summary").asText());
+                // if (node.has("top_expense_categories")) result.put("top_expense_categories", node.get("top_expense_categories"));
+                // if (node.has("budget_suggestions")) result.put("budget_suggestions", node.get("budget_suggestions"));
+                // if (node.has("actionable_steps")) result.put("actionable_steps", node.get("actionable_steps"));
+                // if (node.has("confidence")) result.put("confidence", node.get("confidence").asDouble());
+                // // For legacy/other bots
+                // if (node.has("text")) result.put("text", node.get("text").asText());
+                // if (node.has("options") && node.get("options").isArray()) {
+                //     List<String> options = new ArrayList<>();
+                //     node.get("options").forEach(opt -> options.add(opt.asText()));
+                //     result.put("options", options);
+                // }
+                // // If nothing else, set text to summary or fallback
+                // if (!result.containsKey("text")) {
+                //     if (node.has("summary")) result.put("text", node.get("summary").asText());
+                //     else result.put("text", json);
+                // }
+                // after you parse node = objectMapper.readTree(jsonToParse);
+String displayText = null;
+if (node.has("summary") && !node.get("summary").isNull()) {
+    displayText = node.get("summary").asText();
+} else if (node.has("message") && !node.get("message").isNull()) {
+    // some responses use "message"
+    displayText = node.get("message").asText();
+} else {
+    // fallback: pretty-print JSON but mark as structured
+    displayText = "Structured response (see details).";
+}
+
+// Put human-friendly display text
+result.put("text", displayText);
+
+// Preserve structured content in metadata for frontend use
+result.put("rawJson", node); // keep JsonNode so controller can add to message metadata
+
+// Also extract commonly used lists (if present)
+if (node.has("options") && node.get("options").isArray()) {
+    List<String> options = new ArrayList<>();
+    node.get("options").forEach(opt -> options.add(opt.asText()));
+    result.put("options", options);
+}
+if (node.has("top_expense_categories")) {
+    result.put("top_expense_categories", node.get("top_expense_categories"));
+}
+if (node.has("budget_suggestions")) {
+    result.put("budget_suggestions", node.get("budget_suggestions"));
+}
+if (node.has("confidence")) {
+    result.put("confidence", node.get("confidence").asDouble());
+}
+
+                return result;
+            } catch (Exception e) {
+                log.warn("[parseGeminiResponse] Failed to parse candidate JSON: {}...\nError: {}", json.substring(0, Math.min(120, json.length())), e.getMessage());
+            }
+        }
+        // If all parsing fails, return original response as text
+        log.warn("[parseGeminiResponse] No valid JSON found in Gemini response. Returning raw text.");
+        result.put("text", response);
+        return result;
     }
 
     /**

@@ -79,13 +79,17 @@ const FinancialTrends = ({ month }) => {
     if (selected && (date.getFullYear() !== selected.year || date.getMonth() + 1 !== selected.month)) return;
     const amt = toNumber(t.amount);
     const type = (t.type || '').toString().toLowerCase();
-    if (type === 'income') monthIncome += amt;
-    else monthExpense += amt;
+    if (type === 'income') {
+      monthIncome += amt;
+    } else {
+      // treat anything not marked as 'income' as expense
+      monthExpense += amt;
 
-    // category-wise only for expenses
-    const catId = t.category && (t.category._id || t.category.id || t.category) || 'Uncategorized';
-    const catName = catById[catId] || (t.category && t.category.name) || String(catId) || 'Uncategorized';
-    catMap[catName] = (catMap[catName] || 0) + amt;
+      // category-wise only for expenses
+      const catId = t.category && (t.category._id || t.category.id || t.category) || 'Uncategorized';
+      const catName = catById[catId] || (t.category && t.category.name) || String(catId) || 'Uncategorized';
+      catMap[catName] = (catMap[catName] || 0) + amt;
+    }
   });
 
   // Monthly spending comparison: current month vs previous month
