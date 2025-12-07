@@ -6,20 +6,31 @@ import axios from '../api/axios';
 import { ToastContext } from '../context/ToastContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useLocation } from 'react-router-dom';
 
 const AiAdvisor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [advice, setAdvice] = useState(null);
+  const [adviceMonthly, setAdviceMonthly] = useState(null);
+  const [adviceAll, setAdviceAll] = useState(null);
   const [tips, setTips] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [analysisType, setAnalysisType] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [txns, setTxns] = useState([]);
   const [computedAnalysis, setComputedAnalysis] = useState(null);
   const { addToast } = useContext(ToastContext);
+  const location = useLocation();
 
   useEffect(() => {
     fetchTips();
     fetchTransactionsAndCompute();
+    // auto-generate if navigated from insights
+    if (location?.state?.prefillFrom === 'insights') {
+      // generate monthly first, then full history
+      generateAdvice('monthly');
+      setTimeout(() => generateAdvice('all'), 600);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTips = async () => {
@@ -42,7 +53,7 @@ const AiAdvisor = () => {
 
       // compute last 3 months totals
       const now = new Date();
-      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1); // include current month and two previous
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
       let totalIncome = 0;
       let totalExpense = 0;
 
@@ -69,17 +80,20 @@ const AiAdvisor = () => {
 
   const generateAdvice = async (scope) => {
     setLoading(true);
+    setAnalysisType(scope);
     try {
       const res = await axios.post('/ai/advice', { scope });
       if (res.data) {
-        setAdvice(res.data);
-        addToast('Advice generated successfully!', 'success');
+        if (scope === 'monthly') setAdviceMonthly(res.data);
+        else if (scope === 'all') setAdviceAll(res.data);
+        addToast(`${scope === 'monthly' ? 'Monthly' : 'All Transactions'} analysis completed!`, 'success');
         setIsModalOpen(false);
       }
     } catch (e) {
       addToast('Failed to generate advice: ' + (e.response?.data?.error || e.message), 'error');
     } finally {
       setLoading(false);
+      setAnalysisType(null);
     }
   };
 
@@ -91,63 +105,102 @@ const AiAdvisor = () => {
           <p className="text-slate-600 mt-1">Get personalized financial advice powered by AI</p>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* AI Advice Column */}
           <div className="lg:col-span-2">
             <Card className="p-6 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-slate-900">AI-Powered Advice</h2>
-                <Button onClick={() => setIsModalOpen(true)}>Generate Advice</Button>
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900">AI-Powered Advice</h2>
+                  <p className="text-sm text-slate-600">Choose analysis type or generate both</p>
+                </div>
+                <Button onClick={() => setIsModalOpen(true)} disabled={loading}>Generate</Button>
               </div>
 
-              {advice ? (
-                <div className="space-y-4">
-                  {/* Summary */}
-                  <Card className="p-4 bg-blue-50 border-l-4 border-blue-400">
-                    <h3 className="font-semibold text-slate-900 mb-2">Summary</h3>
-                    <p className="text-slate-700">{advice.summary}</p>
+              {loading && (
+                <div className="mb-4">
+                  <Card className="p-6 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3" />
+                      <div className="text-sm text-slate-700">AI is Analyzing... {analysisType === 'monthly' ? '(monthly)' : analysisType === 'all' ? '(all transactions)' : ''}</div>
+                    </div>
                   </Card>
-
-                  {/* Estimated Savings */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card className="p-4">
-                      <p className="text-sm text-slate-600">Estimated Savings Next Month</p>
-                      <p className="text-2xl font-bold text-green-600">₹{advice.estimatedSavingsNextMonth?.toLocaleString('en-IN')}</p>
-                    </Card>
-                    <Card className="p-4">
-                      <p className="text-sm text-slate-600">Confidence Score</p>
-                      <p className="text-2xl font-bold text-blue-600">{advice.confidenceScore}%</p>
-                    </Card>
-                  </div>
-
-                  {/* Actions */}
-                  <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">Recommended Actions</h3>
-                    <ul className="space-y-2">
-                      {advice.actions?.map((action, idx) => (
-                        <li key={idx} className="flex items-start text-slate-700">
-                          <span className="inline-block w-6 h-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full text-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0 flex items-center justify-center">
-                            {idx + 1}
-                          </span>
-                          <span>{action}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <Button variant="ghost" onClick={() => setIsModalOpen(true)}>Regenerate Advice</Button>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-slate-600 mb-4">No advice generated yet</p>
-                  <Button onClick={() => setIsModalOpen(true)}>Generate Your First Advice</Button>
                 </div>
               )}
+
+              {/* Monthly Analysis */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold">Monthly Analysis</h3>
+                {adviceMonthly ? (
+                  <div className="mt-3 space-y-4">
+                    <Card className="p-4 bg-blue-50 border-l-4 border-blue-400">
+                      <h4 className="font-semibold">Summary</h4>
+                      <p className="text-slate-700">{adviceMonthly.summary}</p>
+                    </Card>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card className="p-4">
+                        <p className="text-sm text-slate-600">Estimated Savings</p>
+                        <p className="text-2xl font-bold text-green-600">₹{adviceMonthly.estimatedSavingsNextMonth?.toLocaleString('en-IN')}</p>
+                      </Card>
+                      <Card className="p-4">
+                        <p className="text-sm text-slate-600">Confidence</p>
+                        <p className="text-2xl font-bold text-blue-600">{adviceMonthly.confidenceScore}%</p>
+                      </Card>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Actions</h4>
+                      <ul className="mt-2 space-y-2">
+                        {adviceMonthly.actions?.map((a, i) => (
+                          <li key={i} className="flex items-start gap-3 text-slate-700">
+                            <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">{i + 1}</span>
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-slate-600 mt-3">No monthly analysis yet.</div>
+                )}
+              </div>
+
+              {/* All Transactions Analysis */}
+              <div>
+                <h3 className="text-lg font-semibold">All Transactions Analysis</h3>
+                {adviceAll ? (
+                  <div className="mt-3 space-y-4">
+                    <Card className="p-4 bg-purple-50 border-l-4 border-purple-400">
+                      <h4 className="font-semibold">Summary</h4>
+                      <p className="text-slate-700">{adviceAll.summary}</p>
+                    </Card>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card className="p-4">
+                        <p className="text-sm text-slate-600">Total Savings Potential</p>
+                        <p className="text-2xl font-bold text-green-600">₹{adviceAll.estimatedSavingsNextMonth?.toLocaleString('en-IN')}</p>
+                      </Card>
+                      <Card className="p-4">
+                        <p className="text-sm text-slate-600">Confidence</p>
+                        <p className="text-2xl font-bold text-purple-600">{adviceAll.confidenceScore}%</p>
+                      </Card>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Long-Term Actions</h4>
+                      <ul className="mt-2 space-y-2">
+                        {adviceAll.actions?.map((a, i) => (
+                          <li key={i} className="flex items-start gap-3 text-slate-700">
+                            <span className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs">{i + 1}</span>
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-slate-600 mt-3">No full-history analysis yet.</div>
+                )}
+              </div>
             </Card>
           </div>
 
-          {/* Sidebar - Tips */}
           <div className="lg:col-span-1">
             <TipCard tips={tips} title="Rule-Based Tips" />
             {(computedAnalysis || analysis) && (

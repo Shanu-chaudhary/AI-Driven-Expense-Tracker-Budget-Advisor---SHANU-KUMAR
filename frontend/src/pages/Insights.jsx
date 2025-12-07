@@ -126,7 +126,7 @@ export default function Insights() {
 
         <div className="flex items-center gap-3">
           <Button variant="ghost" onClick={() => navigate('/export')}>Export</Button>
-          <Button variant="primary" onClick={() => navigate('/ai-advisor')}>Ask AI for Recommendations</Button>
+          <Button variant="primary" onClick={() => navigate('/ai-advisor', { state: { prefillFrom: 'insights' } })}>Ask AI for Recommendations</Button>
         </div>
       </div>
 
@@ -171,8 +171,8 @@ export default function Insights() {
                 <div>{pctBadge(insights.yoyChangePct)}</div>
               </div>
 
-              <div className="pt-2 border-t pt-3 flex gap-2">
-                <Button variant="primary" size="md" onClick={() => navigate('/ai-advisor')}>Get AI Advice</Button>
+              <div className="border-t pt-3 flex gap-2">
+                <Button variant="primary" size="md" onClick={() => navigate('/ai-advisor', { state: { prefillFrom: 'insights' } })}>Get AI Advice</Button>
                 <Button variant="secondary" size="md" onClick={() => navigate('/export')}>Export Data</Button>
               </div>
             </div>

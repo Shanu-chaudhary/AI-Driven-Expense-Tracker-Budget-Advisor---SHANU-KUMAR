@@ -16,7 +16,6 @@ import BudgetPage from "./pages/BudgetPage";
 import ExportPage from "./pages/ExportPage";
 import CommunityPage from "./pages/CommunityPage";
 import AiAdvisor from "./pages/AiAdvisor";
-import AiHistory from "./pages/AiHistory";
 import Insights from "./pages/Insights";
 
 function App() {
@@ -93,14 +92,7 @@ function App() {
             </ProfileRequiredRoute>
           }
         />
-        <Route
-          path="/ai-history"
-          element={
-            <ProfileRequiredRoute>
-              <AiHistory />
-            </ProfileRequiredRoute>
-          }
-        />
+        {/* AI history route removed (history not stored) */}
         <Route
           path="/insights"
           element={

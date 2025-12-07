@@ -3,7 +3,6 @@ import DashboardLayout from "../Layout/DashboardLayout";
 import ProfileCard from "./ProfileCard";
 import FinancialTrends from "./FinancialTrends";
 import TipCard from "../Tips/TipCard";
-import AiHistoryCard from "../AI/AiHistoryCard";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
 import { AuthContext } from "../../context/AuthContext";
@@ -25,9 +24,7 @@ const Dashboard = () => {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   });
   const [tips, setTips] = useState([]);
-  const [latestAiAdvice, setLatestAiAdvice] = useState(null);
   const [tipsLoading, setTipsLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   // const [refreshKey, setRefreshKey] = useState(0);
   const listRef = useRef();
   const navigate = useNavigate();
@@ -68,24 +65,7 @@ const Dashboard = () => {
     fetchTips();
   }, []);
 
-  // Fetch latest AI advice
-  useEffect(() => {
-    const fetchLatestAdvice = async () => {
-      setAiLoading(true);
-      try {
-        const res = await axios.get("/ai/history");
-        if (res.data?.history && res.data.history.length > 0) {
-          setLatestAiAdvice(res.data.history[0]); // Most recent first
-        }
-      } catch (err) {
-        console.error("Failed to fetch AI advice", err);
-      } finally {
-        setAiLoading(false);
-      }
-    };
-
-    fetchLatestAdvice();
-  }, []);
+  // AI history removed: we no longer fetch or surface stored AI advice
 
   // fetch summary whenever selected month changes
   useEffect(() => {
@@ -182,18 +162,7 @@ const Dashboard = () => {
           <FinancialTrends month={summaryMonth} />
         </div>
 
-        {/* AI Insights Preview Section */}
-        {latestAiAdvice && (
-          <div className="mt-8 px-2">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold bp-gradient-text">🤖 Latest AI Insights</h3>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/ai-advisor')}>View All →</Button>
-            </div>
-            <div className="max-w-lg">
-              <AiHistoryCard entry={latestAiAdvice} />
-            </div>
-          </div>
-        )}
+        {/* AI history preview removed (we no longer store AI advice) */}
 
         {/* Rule-Based Tips Section */}
         {tips.length > 0 && (

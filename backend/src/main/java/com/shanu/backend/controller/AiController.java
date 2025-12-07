@@ -49,10 +49,17 @@ public class AiController {
             String userId = authService.getUserFromToken(token.substring(7)).getId();
             String scope = request.getOrDefault("scope", "monthly");
 
-            // Get user transactions from last 3-6 months depending on scope
-            LocalDate startDate = "yearly".equals(scope) ? 
-                LocalDate.now().minusMonths(12) : 
-                LocalDate.now().minusMonths(3);
+            // Get user transactions based on scope
+            // "monthly" = current month only
+            // "all" = all transactions
+            LocalDate startDate;
+            if ("all".equals(scope)) {
+                // Fetch all transactions (from 100 years ago to get all)
+                startDate = LocalDate.now().minusYears(100);
+            } else {
+                // "monthly" scope - get current month only
+                startDate = LocalDate.now().withDayOfMonth(1);
+            }
 
             Date start = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
             List<Transaction> transactions = transactionRepository.findByUserIdAndDateGreaterThan(userId, start);
@@ -95,8 +102,8 @@ public class AiController {
                 ));
             }
 
-            // Call AI service
-            Map<String, Object> aiResponse = aiService.generatePersonalizedAdvice(userId, transactions);
+            // Call AI service (pass scope)
+            Map<String, Object> aiResponse = aiService.generatePersonalizedAdvice(userId, transactions, scope);
 
             // If AI returned error, fall back to rule-based tips
             if (aiResponse == null || aiResponse.containsKey("error")) {
