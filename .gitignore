@@ -1,0 +1,28 @@
+# Java / Maven
+/target/
+**/target/
+/.mvn/
+/.classpath
+/.project
+/.settings/
+
+# Spring Boot property secrets
+/backend/src/main/resources/application-secret.properties
+/backend/application-secret.properties
+/backend/src/main/resources/application-secret.properties
+/backend/src/main/resources/application.properties
+
+# Environment files
+.env
+.env.*
+
+# Node
+/frontend/node_modules/
+/frontend/dist/
+
+# VSCode
+/.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
