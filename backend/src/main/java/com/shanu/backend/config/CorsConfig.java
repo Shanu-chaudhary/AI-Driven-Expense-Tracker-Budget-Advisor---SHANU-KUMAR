@@ -14,7 +14,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://ai-driven-expense-tracker-budget-ad.vercel.app/login","http://localhost:5173") // React app origin
+                        // .allowedOrigins("https://ai-driven-expense-tracker-budget-ad.vercel.app/login","http://localhost:5173") // React app origin
+                          .allowedOrigins("https://ai-driven-expense-tracker-budget-ad.vercel.app", "http://localhost:5173")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
