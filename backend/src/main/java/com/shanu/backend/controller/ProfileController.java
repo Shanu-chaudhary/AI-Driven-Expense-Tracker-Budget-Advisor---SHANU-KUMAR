@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/profile")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${frontend.url}")
 public class ProfileController {
 
     @Autowired

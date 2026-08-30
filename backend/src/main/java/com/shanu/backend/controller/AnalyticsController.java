@@ -18,7 +18,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/analytics")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${frontend.url}")
 public class AnalyticsController {
 
     @Autowired
@@ -84,7 +84,7 @@ public class AnalyticsController {
 
 @RestController
 @RequestMapping("/api/alerts")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${frontend.url}")
 class AlertController {
 
     @Autowired

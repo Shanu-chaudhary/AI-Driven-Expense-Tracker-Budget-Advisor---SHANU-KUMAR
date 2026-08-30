@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
+@CrossOrigin(origins = "${frontend.url}", allowedHeaders = "*")
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);

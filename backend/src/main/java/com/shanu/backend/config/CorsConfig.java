@@ -1,5 +1,6 @@
 package com.shanu.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -8,14 +9,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig {
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        // .allowedOrigins("https://ai-driven-expense-tracker-budget-ad.vercel.app/login","http://localhost:5173") // React app origin
-                          .allowedOrigins("https://ai-driven-expense-tracker-budget-ad.vercel.app", "http://localhost:5173")
+                        .allowedOrigins(frontendUrl, "https://ai-driven-expense-tracker-budget-ad.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

@@ -13,7 +13,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/tips")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${frontend.url}")
 public class TipController {
 
     @Autowired
