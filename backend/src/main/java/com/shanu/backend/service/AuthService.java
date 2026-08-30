@@ -361,7 +361,7 @@ public class AuthService {
         user.setRole("USER");
         user.setCreatedAt(new Date());
         user.setUpdatedAt(new Date());
-        user.setEmailVerified(false);
+        user.setEmailVerified(true);
 
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);
